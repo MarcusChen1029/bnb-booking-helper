@@ -70,13 +70,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn.big { padding: 12px 24px; font-size: 16px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
+.demo-banner { background: var(--accent-soft); color: var(--accent); text-align: center; font-size: 13.5px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.demo-banner b { font-weight: 700; }
+
 /* start screen */
 .start { display: grid; place-items: center; padding: 48px 16px; }
 .start-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 32px; max-width: 560px; width: 100%; display: grid; gap: 16px; text-align: center; }
 .start-card h1 { margin: 0; font-size: 24px; text-wrap: balance; }
 .start-card p { margin: 0; color: var(--muted); }
-.drop { border: 2px dashed var(--line); border-radius: 12px; padding: 28px 16px; display: grid; gap: 10px; justify-items: center; color: var(--muted); }
-.drop.over { border-color: var(--brand); background: var(--brand-soft); }
 .error { color: var(--danger) !important; background: var(--danger-soft); border-radius: 8px; padding: 10px 12px; text-align: left; }
 
 /* tabs */
@@ -212,26 +213,20 @@ footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: va
 <header class="topbar">
   <div class="brand">
     <span class="logo" aria-hidden="true">宿</span>
-    <div><strong>民宿訂房小幫手</strong><small id="file-label">尚未開啟檔案</small></div>
+    <div><strong>民宿訂房小幫手</strong><small id="file-label">展示版</small></div>
   </div>
   <div class="top-actions">
     <span id="dirty-badge" class="badge" hidden></span>
-    <button type="button" id="btn-open-other" class="btn" hidden>開啟其他檔案</button>
-    <button type="button" id="btn-save" class="btn primary" disabled>儲存到 Excel</button>
+    <button type="button" id="btn-save" class="btn primary" disabled>下載 Excel</button>
   </div>
 </header>
 
+<div class="demo-banner"><b>展示版</b>：使用範例資料，修改只存在這個頁面，重新整理就會還原。按「下載 Excel」可以看到修改後的 Excel 檔。</div>
+
 <section id="start" class="start">
   <div class="start-card">
-    <h1>開啟你的訂房記帳表</h1>
-    <p>選擇「民宿訂房記帳表」Excel 檔，就能用簡單的畫面新增訂房、看房況、記帳。檔案只在你的電腦上處理，不會上傳到任何地方。</p>
-    <div id="drop" class="drop">
-      <button type="button" id="btn-open" class="btn primary big">選擇 Excel 檔</button>
-      <span>或把檔案拖曳到這裡</span>
-    </div>
-    <button type="button" id="btn-sample" class="btn link">沒有檔案？用範例檔試用</button>
+    <h1>載入範例資料中…</h1>
     <p id="start-error" class="error" hidden></p>
-    <input type="file" id="file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   </div>
 </section>
 
@@ -314,7 +309,7 @@ footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: va
       </div>
     </section>
   </main>
-  <footer class="note">房間、房價、訂房管道和收支類別請在 Excel 的「設定」工作表修改。按「儲存到 Excel」後，Excel 裡的房況月曆和月報表會自動更新。</footer>
+  <footer class="note">展示版使用範例資料。正式版可以直接開啟你自己的 Excel 檔，修改後存回原檔，Excel 裡的房況月曆和月報表會自動更新。房間、房價、訂房管道和收支類別在 Excel 的「設定」工作表設定。</footer>
 </div>
 
 <dialog id="dlg-booking" aria-labelledby="bk-dlg-title">
@@ -782,15 +777,14 @@ function renderLedger() {
 function markChanged() {
   state.changes++;
   $("dirty-badge").hidden = false;
-  $("dirty-badge").textContent = `${state.changes} 項變更未儲存`;
-  $("btn-save").disabled = false;
+  $("dirty-badge").textContent = `已修改 ${state.changes} 項`;
 }
 
 async function save() {
-  if (!state.zip || !state.dirtySheets.size) return;
+  if (!state.zip) return;
   const btn = $("btn-save");
   btn.disabled = true;
-  btn.textContent = "儲存中…";
+  btn.textContent = "準備檔案中…";
   try {
     for (const name of state.dirtySheets) state.zip.file(state.paths[name], serialize(state.docs[name]));
     // Ask Excel to recalculate every formula when the file is opened.
@@ -820,18 +814,14 @@ async function save() {
       }
     }
     if (!savedInPlace) download(blob, state.fileName);
-    state.dirtySheets.clear();
-    state.changes = 0;
-    $("dirty-badge").hidden = true;
     if (savedInPlace) toast(`已儲存到「${state.fileName}」`);
-    else if (!state.handle) toast("已下載更新後的 Excel，請用它取代原本的檔案。");
+    else toast(state.changes ? `已下載 Excel（包含你修改的 ${state.changes} 項）` : "已下載範例 Excel");
   } catch (err) {
     console.error(err);
-    toast("儲存失敗：" + err.message);
-    btn.disabled = false;
+    toast("下載失敗：" + err.message);
   } finally {
-    btn.textContent = "儲存到 Excel";
-    btn.disabled = state.changes === 0;
+    btn.textContent = "下載 Excel";
+    btn.disabled = false;
   }
 }
 
@@ -949,7 +939,7 @@ function submitBooking(ev) {
   else state.bookings.push(b);
   $("dlg-booking").close();
   render();
-  toast(state.editingBooking ? `已更新 ${b.name} 的訂房（記得按「儲存到 Excel」）` : `已新增 ${b.name} 的訂房（記得按「儲存到 Excel」）`);
+  toast(state.editingBooking ? `已更新 ${b.name} 的訂房` : `已新增 ${b.name} 的訂房`);
 }
 
 function deleteBooking() {
@@ -1024,7 +1014,7 @@ function submitLedger(ev) {
   if (monthOf(e.date) !== state.lgMonth) state.lgMonth = monthOf(e.date);
   resetLedgerForm();
   render();
-  toast(wasEdit ? "已更新這筆收支（記得按「儲存到 Excel」）" : "已新增一筆收支（記得按「儲存到 Excel」）");
+  toast(wasEdit ? "已更新這筆收支" : "已新增一筆收支");
 }
 
 function deleteLedger() {
@@ -1047,13 +1037,12 @@ async function openFromBuffer(buf, name, handle) {
     state.lgMonth = m;
     $("start").hidden = true;
     $("app").hidden = false;
-    $("btn-open-other").hidden = false;
-    $("btn-save").disabled = true;
-    $("btn-save").title = handle && handle.createWritable ? "直接存回原本的檔案" : "下載更新後的 Excel 檔";
+    $("btn-save").disabled = false;
+    $("btn-save").title = "下載包含目前修改的 Excel 檔";
     resetLedgerForm();
     render();
     switchTab("overview");
-    toast(`已開啟「${name}」：${state.bookings.length} 筆訂房、${state.ledger.length} 筆收支`);
+    toast(`已載入範例資料：${state.bookings.length} 筆訂房、${state.ledger.length} 筆收支`);
   } catch (err) {
     console.error(err);
     showStartError(err.message || "無法讀取這個檔案。");
@@ -1063,32 +1052,9 @@ async function openFromBuffer(buf, name, handle) {
 function showStartError(msg) {
   $("start").hidden = false;
   $("app").hidden = true;
+  $("start").querySelector("h1").textContent = "無法載入範例資料";
   $("start-error").textContent = msg;
   $("start-error").hidden = false;
-}
-
-async function pickFile() {
-  if (state.changes && !confirmLeave()) return;
-  if (window.showOpenFilePicker) {
-    try {
-      const [handle] = await window.showOpenFilePicker({ types: [{ description: "Excel 活頁簿", accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] } }] });
-      const file = await handle.getFile();
-      await openFromBuffer(await file.arrayBuffer(), file.name, handle);
-      return;
-    } catch (err) {
-      if (err.name === "AbortError") return;
-      console.warn(err);
-    }
-  }
-  $("file-input").click();
-}
-
-function confirmLeave() {
-  toast("還有變更沒儲存，請先按「儲存到 Excel」，或再按一次「開啟其他檔案」放棄變更。");
-  if (state.leaveArmed) { state.leaveArmed = false; return true; }
-  state.leaveArmed = true;
-  setTimeout(() => (state.leaveArmed = false), 5000);
-  return false;
 }
 
 /* ---------------- tabs & events ---------------- */
@@ -1098,32 +1064,6 @@ function switchTab(name) {
 }
 
 document.querySelectorAll(".tabs button").forEach((btn) => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
-$("btn-open").addEventListener("click", pickFile);
-$("btn-open-other").addEventListener("click", pickFile);
-$("file-input").addEventListener("change", async (e) => {
-  const f = e.target.files[0];
-  if (f) await openFromBuffer(await f.arrayBuffer(), f.name, null);
-  e.target.value = "";
-});
-$("btn-sample").addEventListener("click", async () => {
-  try {
-    const res = await fetch("sample.xlsx");
-    if (!res.ok) throw new Error();
-    await openFromBuffer(await res.arrayBuffer(), "民宿訂房記帳表_範例.xlsx", null);
-  } catch { showStartError("找不到範例檔。請改用「選擇 Excel 檔」開啟你的檔案。"); }
-});
-const drop = $("drop");
-drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
-drop.addEventListener("dragleave", () => drop.classList.remove("over"));
-drop.addEventListener("drop", async (e) => {
-  e.preventDefault();
-  drop.classList.remove("over");
-  const item = e.dataTransfer.items && e.dataTransfer.items[0];
-  let handle = null;
-  if (item && item.getAsFileSystemHandle) { try { handle = await item.getAsFileSystemHandle(); } catch { handle = null; } }
-  const file = handle && handle.getFile ? await handle.getFile() : e.dataTransfer.files[0];
-  if (file) await openFromBuffer(await file.arrayBuffer(), file.name, handle && handle.kind === "file" ? handle : null);
-});
 $("btn-save").addEventListener("click", save);
 
 $("btn-new-booking").addEventListener("click", () => openBooking(null));
@@ -1184,7 +1124,16 @@ $("lg-rows").addEventListener("click", (e) => {
 $("lg-prev").addEventListener("click", () => { state.lgMonth = prevMonth(state.lgMonth); resetLedgerForm(); renderLedger(); });
 $("lg-next").addEventListener("click", () => { state.lgMonth = nextMonth(state.lgMonth); resetLedgerForm(); renderLedger(); });
 
-window.addEventListener("beforeunload", (e) => { if (state.changes) { e.preventDefault(); e.returnValue = ""; } });
+(async () => {
+  try {
+    const res = await fetch("sample.xlsx", { cache: "no-store" });
+    if (!res.ok) throw new Error(String(res.status));
+    await openFromBuffer(await res.arrayBuffer(), "民宿訂房記帳表_範例.xlsx", null);
+  } catch (err) {
+    console.error(err);
+    showStartError("範例資料載入失敗，請重新整理頁面。");
+  }
+})();
 </script>
 </body>
 </html>

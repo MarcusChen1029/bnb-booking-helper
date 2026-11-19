@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 /* Layout: top bar with save, four tabs (overview, bookings, calendar, ledger); forms open in a dialog. */
 :root {
@@ -189,6 +188,52 @@ dialog::backdrop { background: rgba(10, 25, 30, .45); }
 .dlg-foot .spacer { flex: 1; }
 .icon-btn { border: 0; background: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); padding: 4px 8px; }
 
+.xl-dialog { width: min(1240px, calc(100vw - 24px)); height: calc(100vh - 32px); max-height: none; }
+.xl-dialog[open] { display: flex; flex-direction: column; }
+.xl-dialog > * { flex: none; }
+.xl-dialog > .xl-sheet { flex: 1 1 auto; min-height: 0; }
+.xl-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #1F6E43; color: #fff; }
+.xl-head .icon-btn { color: #fff; }
+.xl-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.xl-name strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xl-icon { width: 26px; height: 26px; border-radius: 5px; background: #fff; color: #1F6E43; font-weight: 700; display: grid; place-items: center; font-size: 14px; flex: none; }
+.xl-note { margin: 0; padding: 8px 16px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.xl-tools { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.xl-tools:not([hidden]) { display: flex; }
+.xl-sheet { overflow: auto; background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='160'%3E%3Ctext x='20' y='100' transform='rotate(-20 130 80)' font-family='sans-serif' font-size='26' fill='%230F5E6E' fill-opacity='0.07'%3E範例預覽%3C/text%3E%3C/svg%3E");
+  user-select: none; -webkit-user-select: none; color: #111827; }
+table.xl { border-collapse: collapse; table-layout: fixed; font-family: "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif; font-size: 12.5px; }
+table.xl th, table.xl td { border: 1px solid #E2E5E9; height: 24px; padding: 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+table.xl thead th { position: sticky; top: 0; z-index: 2; background: #F3F4F6; color: #4B5563; font-weight: 400; text-align: center; font-size: 11.5px; }
+table.xl th.xl-rn { position: sticky; left: 0; z-index: 1; background: #F3F4F6; color: #4B5563; font-weight: 400; text-align: center; font-size: 11.5px; }
+table.xl th.xl-corner { left: 0; z-index: 3; }
+table.xl td.xl-title { font-size: 17px; font-weight: 700; color: #0F3D4C; height: 32px; }
+table.xl td.xl-title2 { font-size: 14px; font-weight: 700; color: #0F3D4C; }
+table.xl td.xl-sub { color: #6B7280; font-size: 12px; }
+table.xl td.h-in { background: #0F5E6E; color: #fff; font-weight: 700; text-align: center; }
+table.xl td.h-auto { background: #6B7280; color: #fff; font-weight: 700; text-align: center; }
+table.xl td.h-we { background: #B45309; color: #fff; font-weight: 700; text-align: center; }
+table.xl td.in { color: #1D4ED8; }
+table.xl td.xl-input { background: #FFF9DB; color: #1D4ED8; font-weight: 700; }
+table.xl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.xl td.ctr { text-align: center; }
+table.xl td.bold { font-weight: 700; }
+table.xl td.x-cancel { color: #9CA3AF !important; text-decoration: line-through; }
+table.xl td.x-red { color: #B91C1C; }
+table.xl td.x-dup { background: #FDE2E2; color: #B91C1C; font-weight: 700; }
+table.xl td.x-warn { background: #FEF3C7; color: #B45309; font-weight: 700; }
+table.xl td.x-cal { background: #BFE3EA; color: #0F3D4C; font-size: 11px; }
+table.xl td.x-caldup { background: #FCA5A5; color: #7F1D1D; font-weight: 700; font-size: 11px; }
+table.xl td.x-total { background: #EEF2F5; font-weight: 700; }
+table.xl td.x-kpil { background: #E6F2F4; color: #0F5E6E; font-size: 11.5px; }
+table.xl td.x-kpiv { background: #E6F2F4; color: #0F3D4C; font-size: 17px; font-weight: 700; height: 34px; }
+.xl-chart { padding: 16px 0 24px 48px; }
+.xl-chart svg { background: #fff; border: 1px solid #E2E5E9; max-width: 100%; height: auto; }
+.xl-tabs { display: flex; gap: 2px; padding: 0 12px; background: #F3F4F6; border-top: 1px solid #D1D5DB; overflow-x: auto; }
+.xl-tabs button { border: 0; background: none; padding: 8px 16px; cursor: pointer; color: #4B5563; font-size: 13.5px; border-bottom: 3px solid transparent; white-space: nowrap; }
+.xl-tabs button[aria-selected="true"] { background: #fff; color: #1F6E43; font-weight: 700; border-bottom-color: #1F6E43; }
+
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--surface); padding: 10px 18px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 50; }
 #toast:empty { display: none; }
 
@@ -217,11 +262,11 @@ footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: va
   </div>
   <div class="top-actions">
     <span id="dirty-badge" class="badge" hidden></span>
-    <button type="button" id="btn-save" class="btn primary" disabled>下載 Excel</button>
+    <button type="button" id="btn-preview" class="btn primary" disabled>預覽 Excel</button>
   </div>
 </header>
 
-<div class="demo-banner"><b>展示版</b>：使用範例資料，修改只存在這個頁面，重新整理就會還原。按「下載 Excel」可以看到修改後的 Excel 檔。</div>
+<div class="demo-banner"><b>展示版</b>：使用範例資料，修改只存在這個頁面，重新整理就會還原。按「預覽 Excel」可以看到資料在 Excel 檔裡的樣子。</div>
 
 <section id="start" class="start">
   <div class="start-card">
@@ -309,7 +354,7 @@ footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: va
       </div>
     </section>
   </main>
-  <footer class="note">展示版使用範例資料。正式版可以直接開啟你自己的 Excel 檔，修改後存回原檔，Excel 裡的房況月曆和月報表會自動更新。房間、房價、訂房管道和收支類別在 Excel 的「設定」工作表設定。</footer>
+  <footer class="note">展示版使用範例資料。正式版可以直接開啟你自己的 Excel 檔，修改後存回原檔，Excel 裡的房況月曆和月報表會自動更新。</footer>
 </div>
 
 <dialog id="dlg-booking" aria-labelledby="bk-dlg-title">
@@ -348,6 +393,23 @@ footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: va
   </form>
 </dialog>
 
+<dialog id="dlg-excel" class="xl-dialog" aria-labelledby="xl-title">
+  <div class="xl-head">
+    <div class="xl-name"><span class="xl-icon" aria-hidden="true">X</span><strong id="xl-title">民宿訂房記帳表_範例.xlsx</strong><span class="chip s-已確認">唯讀預覽</span></div>
+    <button type="button" class="icon-btn" id="xl-close" aria-label="關閉預覽">×</button>
+  </div>
+  <p class="xl-note">這是 Excel 檔的內容預覽，已包含你在這頁做的修改。正式交件時會提供可以直接編輯、公式會自動計算的 Excel 檔。</p>
+  <div class="xl-tools" id="xl-tools" hidden></div>
+  <div class="xl-sheet" id="xl-sheet"></div>
+  <div class="xl-tabs" id="xl-tabs" role="tablist" aria-label="工作表">
+    <button type="button" role="tab" data-sheet="訂房紀錄">訂房紀錄</button>
+    <button type="button" role="tab" data-sheet="收支記帳">收支記帳</button>
+    <button type="button" role="tab" data-sheet="房況月曆">房況月曆</button>
+    <button type="button" role="tab" data-sheet="月報表">月報表</button>
+    <button type="button" role="tab" data-sheet="設定">設定</button>
+  </div>
+</dialog>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -355,19 +417,13 @@ footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: va
 /* ------------------------------------------------------------------
  * Workbook layout (must match 民宿訂房記帳表)
  * ------------------------------------------------------------------ */
-const SHEET = { settings: "設定", bookings: "訂房紀錄", ledger: "收支記帳" };
 const BK = { first: 4, last: 303, cols: { booked: "B", name: "C", phone: "D", room: "E", in: "F", out: "G", ppl: "I",
   channel: "J", discount: "L", deposit: "N", balance: "O", status: "R", note: "T" } };
 const LG = { first: 4, last: 503, cols: { date: "A", kind: "B", cat: "C", desc: "D", amount: "E", pay: "F", note: "G" } };
-const DATE_FIELDS = new Set(["booked", "in", "out", "date"]);
-const NUM_FIELDS = new Set(["ppl", "discount", "deposit", "balance", "amount"]);
-const NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-const RNS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-const XMLNS = "http://www.w3.org/XML/1998/namespace";
+const SAMPLE_DATA = {"settings": {"rooms": [{"no": "101", "type": "海景雙人房", "wk": 2800, "we": 3600, "cap": 2}, {"no": "102", "type": "海景雙人房", "wk": 2800, "we": 3600, "cap": 2}, {"no": "201", "type": "家庭四人房", "wk": 4200, "we": 5200, "cap": 4}, {"no": "202", "type": "背包客雙床房", "wk": 2000, "we": 2600, "cap": 2}], "channels": [{"name": "直客", "rate": 0}, {"name": "Booking.com", "rate": 0.15}, {"name": "Agoda", "rate": 0.15}, {"name": "Airbnb", "rate": 0.03}], "statuses": ["已確認", "已入住", "已退房", "取消"], "categories": ["備品耗材", "清潔洗滌", "水電瓦斯", "網路通訊", "維修保養", "早餐食材", "人事薪資", "廣告行銷", "其他支出", "早餐加購", "接駁服務", "其他收入"], "payments": ["現金", "轉帳", "信用卡", "行動支付"]}, "bookings": [{"row": 4, "booked": "2026-10-20", "name": "王小明", "phone": "0900-000-101", "room": "101", "in": "2026-11-06", "out": "2026-11-08", "ppl": 2, "channel": "Booking.com", "discount": null, "deposit": null, "balance": 7200, "status": "已退房", "note": ""}, {"row": 5, "booked": "2026-10-25", "name": "陳美玲", "phone": "0900-000-102", "room": "201", "in": "2026-11-07", "out": "2026-11-08", "ppl": 4, "channel": "直客", "discount": null, "deposit": 1500, "balance": 3700, "status": "已退房", "note": "帶一隻小型犬"}, {"row": 6, "booked": "2026-11-01", "name": "林志豪", "phone": "0900-000-103", "room": "202", "in": "2026-11-10", "out": "2026-11-12", "ppl": 2, "channel": "Agoda", "discount": null, "deposit": null, "balance": 4000, "status": "已退房", "note": "加購早餐 2 天"}, {"row": 7, "booked": "2026-11-03", "name": "張雅婷", "phone": "0900-000-104", "room": "102", "in": "2026-11-13", "out": "2026-11-15", "ppl": 2, "channel": "直客", "discount": 300, "deposit": 1500, "balance": 3500, "status": "已退房", "note": "回頭客，折 300"}, {"row": 8, "booked": "2026-11-05", "name": "李建宏", "phone": "0900-000-105", "room": "101", "in": "2026-11-14", "out": "2026-11-15", "ppl": 2, "channel": "Airbnb", "discount": null, "deposit": null, "balance": 3600, "status": "已退房", "note": ""}, {"row": 9, "booked": "2026-11-08", "name": "黃淑芬", "phone": "0900-000-106", "room": "201", "in": "2026-11-20", "out": "2026-11-22", "ppl": 3, "channel": "直客", "discount": null, "deposit": 3000, "balance": null, "status": "已確認", "note": ""}, {"row": 10, "booked": "2026-11-10", "name": "吳俊傑", "phone": "0900-000-107", "room": "102", "in": "2026-11-18", "out": "2026-11-21", "ppl": 2, "channel": "Booking.com", "discount": null, "deposit": null, "balance": null, "status": "已入住", "note": ""}, {"row": 11, "booked": "2026-11-12", "name": "劉怡君", "phone": "0900-000-108", "room": "101", "in": "2026-11-27", "out": "2026-11-29", "ppl": 2, "channel": "Agoda", "discount": null, "deposit": null, "balance": null, "status": "已確認", "note": ""}, {"row": 12, "booked": "2026-11-14", "name": "蔡宗翰", "phone": "0900-000-109", "room": "202", "in": "2026-12-04", "out": "2026-12-06", "ppl": 2, "channel": "直客", "discount": null, "deposit": 1500, "balance": null, "status": "已確認", "note": "需要火車站接送"}, {"row": 13, "booked": "2026-11-15", "name": "楊佩珊", "phone": "0900-000-110", "room": "201", "in": "2026-12-05", "out": "2026-12-06", "ppl": 4, "channel": "Booking.com", "discount": null, "deposit": null, "balance": null, "status": "取消", "note": "房客取消"}, {"row": 14, "booked": "2026-11-16", "name": "許家豪", "phone": "0900-000-111", "room": "101", "in": "2026-12-11", "out": "2026-12-13", "ppl": 2, "channel": "直客", "discount": null, "deposit": 2000, "balance": null, "status": "已確認", "note": ""}, {"row": 15, "booked": "2026-11-17", "name": "鄭雅文", "phone": "0900-000-112", "room": "102", "in": "2026-12-12", "out": "2026-12-14", "ppl": 2, "channel": "Airbnb", "discount": null, "deposit": null, "balance": null, "status": "已確認", "note": ""}, {"row": 16, "booked": "2026-11-18", "name": "謝明哲", "phone": "0900-000-113", "room": "102", "in": "2026-12-13", "out": "2026-12-15", "ppl": 2, "channel": "直客", "discount": null, "deposit": 1000, "balance": null, "status": "已確認", "note": "範例：故意與上一筆重複，示範警示"}, {"row": 17, "booked": "2026-11-18", "name": "郭心怡", "phone": "0900-000-114", "room": "201", "in": "2026-12-24", "out": "2026-12-27", "ppl": 4, "channel": "直客", "discount": null, "deposit": 4000, "balance": null, "status": "已確認", "note": "聖誕節"}, {"row": 18, "booked": "2026-11-19", "name": "洪志明", "phone": "0900-000-115", "room": "101", "in": "2026-12-30", "out": "2027-01-01", "ppl": 2, "channel": "Booking.com", "discount": null, "deposit": null, "balance": null, "status": "已確認", "note": "跨年"}, {"row": 19, "booked": "2026-11-19", "name": "曾詩涵", "phone": "0900-000-116", "room": "202", "in": "2026-12-31", "out": "2027-01-02", "ppl": 2, "channel": "Agoda", "discount": null, "deposit": null, "balance": null, "status": "已確認", "note": "跨年"}], "ledger": [{"row": 4, "date": "2026-11-02", "kind": "支出", "cat": "備品耗材", "desc": "沐浴備品、拖鞋補貨", "amount": 2350, "pay": "轉帳", "note": ""}, {"row": 5, "date": "2026-11-05", "kind": "支出", "cat": "清潔洗滌", "desc": "床單毛巾送洗", "amount": 1800, "pay": "現金", "note": ""}, {"row": 6, "date": "2026-11-10", "kind": "支出", "cat": "水電瓦斯", "desc": "10 月電費", "amount": 3260, "pay": "轉帳", "note": ""}, {"row": 7, "date": "2026-11-10", "kind": "支出", "cat": "網路通訊", "desc": "光纖網路月費", "amount": 1199, "pay": "信用卡", "note": ""}, {"row": 8, "date": "2026-11-12", "kind": "收入", "cat": "早餐加購", "desc": "林志豪 2 人 × 2 天", "amount": 800, "pay": "現金", "note": ""}, {"row": 9, "date": "2026-11-16", "kind": "支出", "cat": "維修保養", "desc": "202 冷氣清洗", "amount": 1500, "pay": "現金", "note": ""}, {"row": 10, "date": "2026-11-17", "kind": "支出", "cat": "早餐食材", "desc": "早餐食材採買", "amount": 2100, "pay": "現金", "note": ""}, {"row": 11, "date": "2026-11-18", "kind": "收入", "cat": "接駁服務", "desc": "火車站接送", "amount": 300, "pay": "行動支付", "note": ""}]};
 
 const state = {
-  zip: null, fileName: "", handle: null, paths: {}, docs: {}, index: {}, strings: [],
-  settings: null, bookings: [], ledger: [], dirtySheets: new Set(), changes: 0,
+  fileName: "民宿訂房記帳表_範例.xlsx", settings: null, bookings: [], ledger: [], changes: 0,
   calMonth: "", lgMonth: "", filter: "active", editingBooking: null, editingLedger: null, lgKind: "支出",
 };
 
@@ -393,194 +449,6 @@ const prevMonth = (ym) => { let [y, m] = ym.split("-").map(Number); m--; if (m <
 const monthLabel = (ym) => { const [y, m] = ym.split("-").map(Number); return `${y} 年 ${m} 月`; };
 const md = (iso) => { const [, m, d] = iso.split("-").map(Number); return `${m}/${d}`; };
 const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
-
-/* ---------------- XML helpers ---------------- */
-const parseXML = (s) => new DOMParser().parseFromString(s, "application/xml");
-const serialize = (doc) => { const s = new XMLSerializer().serializeToString(doc); return s.startsWith("<?xml") ? s : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + s; };
-const colNum = (letters) => [...letters].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
-const splitRef = (ref) => { const m = /^([A-Z]+)(\d+)$/.exec(ref); return { col: m[1], row: +m[2] }; };
-
-function buildIndex(name) {
-  const doc = state.docs[name];
-  const sheetData = doc.getElementsByTagNameNS(NS, "sheetData")[0];
-  const rows = new Map(), cells = new Map();
-  for (const row of sheetData.getElementsByTagNameNS(NS, "row")) {
-    rows.set(+row.getAttribute("r"), row);
-    for (const c of row.getElementsByTagNameNS(NS, "c")) cells.set(c.getAttribute("r"), c);
-  }
-  state.index[name] = { sheetData, rows, cells };
-}
-
-function readCell(name, ref) {
-  const c = state.index[name].cells.get(ref);
-  if (!c) return null;
-  const t = c.getAttribute("t");
-  if (t === "inlineStr") {
-    const is = c.getElementsByTagNameNS(NS, "is")[0];
-    if (!is) return null;
-    return [...is.getElementsByTagNameNS(NS, "t")].map((x) => x.textContent).join("");
-  }
-  const v = c.getElementsByTagNameNS(NS, "v")[0];
-  if (!v || v.textContent === "") return null;
-  const s = v.textContent;
-  if (t === "s") return state.strings[+s] ?? null;
-  if (t === "str" || t === "e") return s;
-  if (t === "b") return s === "1";
-  const n = Number(s);
-  return Number.isFinite(n) ? n : s;
-}
-
-function getOrCreateCell(name, ref) {
-  const idx = state.index[name];
-  let c = idx.cells.get(ref);
-  if (c) return c;
-  const doc = state.docs[name];
-  const { col, row } = splitRef(ref);
-  let rowEl = idx.rows.get(row);
-  if (!rowEl) {
-    rowEl = doc.createElementNS(NS, "row");
-    rowEl.setAttribute("r", String(row));
-    const after = [...idx.rows.keys()].filter((r) => r > row).sort((a, b) => a - b)[0];
-    idx.sheetData.insertBefore(rowEl, after ? idx.rows.get(after) : null);
-    idx.rows.set(row, rowEl);
-  }
-  rowEl.removeAttribute("spans");
-  c = doc.createElementNS(NS, "c");
-  c.setAttribute("r", ref);
-  const target = colNum(col);
-  const next = [...rowEl.getElementsByTagNameNS(NS, "c")].find((x) => colNum(splitRef(x.getAttribute("r")).col) > target);
-  rowEl.insertBefore(c, next || null);
-  idx.cells.set(ref, c);
-  return c;
-}
-
-function writeCell(name, ref, value) {
-  const doc = state.docs[name];
-  const c = getOrCreateCell(name, ref);
-  while (c.firstChild) c.removeChild(c.firstChild);
-  c.removeAttribute("t");
-  if (value !== null && value !== undefined && value !== "") {
-    if (typeof value === "number") {
-      const v = doc.createElementNS(NS, "v");
-      v.textContent = String(value);
-      c.appendChild(v);
-    } else {
-      c.setAttribute("t", "inlineStr");
-      const is = doc.createElementNS(NS, "is");
-      const t = doc.createElementNS(NS, "t");
-      t.setAttributeNS(XMLNS, "xml:space", "preserve");
-      t.textContent = String(value);
-      is.appendChild(t);
-      c.appendChild(is);
-    }
-  }
-  state.dirtySheets.add(name);
-}
-
-/* ---------------- load ---------------- */
-async function loadWorkbook(buffer, fileName, handle) {
-  const zip = await JSZip.loadAsync(buffer);
-  const wbFile = zip.file("xl/workbook.xml");
-  const relFile = zip.file("xl/_rels/workbook.xml.rels");
-  if (!wbFile || !relFile) throw new Error("這個檔案不是 Excel 活頁簿（.xlsx）。");
-  const wb = parseXML(await wbFile.async("string"));
-  const rels = parseXML(await relFile.async("string"));
-  const relMap = {}, relType = {};
-  for (const r of rels.getElementsByTagName("Relationship")) {
-    relMap[r.getAttribute("Id")] = r.getAttribute("Target");
-    relType[r.getAttribute("Type").split("/").pop()] = r.getAttribute("Target");
-  }
-  const resolve = (t) => (t.startsWith("/") ? t.slice(1) : "xl/" + t.replace(/^\.\//, ""));
-  const paths = {};
-  for (const s of wb.getElementsByTagNameNS(NS, "sheet")) {
-    const id = s.getAttributeNS(RNS, "id") || s.getAttribute("r:id");
-    if (relMap[id]) paths[s.getAttribute("name")] = resolve(relMap[id]);
-  }
-  const missing = Object.values(SHEET).filter((n) => !paths[n]);
-  if (missing.length) throw new Error(`找不到「${missing.join("」「")}」工作表。請開啟「民宿訂房記帳表」的 Excel 檔。`);
-
-  const strings = [];
-  const ssPath = relType.sharedStrings ? resolve(relType.sharedStrings) : "xl/sharedStrings.xml";
-  if (zip.file(ssPath)) {
-    const ss = parseXML(await zip.file(ssPath).async("string"));
-    for (const si of ss.getElementsByTagNameNS(NS, "si")) {
-      strings.push([...si.getElementsByTagNameNS(NS, "t")].filter((t) => t.parentNode.localName !== "rPh").map((t) => t.textContent).join(""));
-    }
-  }
-
-  const fresh = { zip, fileName, handle, paths, docs: {}, index: {}, strings, wbDoc: wb, dirtySheets: new Set(), changes: 0 };
-  for (const name of Object.values(SHEET)) fresh.docs[name] = parseXML(await zip.file(paths[name]).async("string"));
-  Object.assign(state, fresh);
-  for (const name of Object.values(SHEET)) buildIndex(name);
-
-  if (readCell(SHEET.bookings, "C3") !== "房客姓名" || readCell(SHEET.ledger, "E3") !== "金額") {
-    throw new Error("工作表的欄位跟「民宿訂房記帳表」不一樣，無法安全地寫入。請使用原本的範本檔。");
-  }
-  readAll();
-}
-
-function readAll() {
-  const S = SHEET.settings;
-  const rooms = [];
-  for (let r = 5; r <= 14; r++) {
-    const no = readCell(S, "B" + r);
-    if (no === null || no === "") continue;
-    rooms.push({ no: String(no), type: readCell(S, "C" + r) || "", wk: +readCell(S, "D" + r) || 0, we: +readCell(S, "E" + r) || 0, cap: +readCell(S, "F" + r) || 0 });
-  }
-  const channels = [];
-  for (let r = 5; r <= 12; r++) {
-    const n = readCell(S, "H" + r);
-    if (n === null || n === "") continue;
-    channels.push({ name: String(n), rate: +readCell(S, "I" + r) || 0 });
-  }
-  const listFrom = (col, a, b, fallback) => {
-    const out = [];
-    for (let r = a; r <= b; r++) { const v = readCell(S, col + r); if (v !== null && v !== "") out.push(String(v)); }
-    return out.length ? out : fallback;
-  };
-  state.settings = {
-    rooms, channels,
-    statuses: listFrom("K", 5, 8, ["已確認", "已入住", "已退房", "取消"]),
-    categories: listFrom("M", 5, 20, ["其他支出", "其他收入"]),
-    payments: listFrom("O", 5, 10, ["現金", "轉帳"]),
-  };
-
-  state.bookings = [];
-  for (let r = BK.first; r <= BK.last; r++) {
-    const b = readRow(SHEET.bookings, BK.cols, r);
-    if (!b.name && !b.room && !b.in) continue;
-    state.bookings.push(b);
-  }
-  state.ledger = [];
-  for (let r = LG.first; r <= LG.last; r++) {
-    const e = readRow(SHEET.ledger, LG.cols, r);
-    if (!e.date && !e.amount && !e.desc) continue;
-    state.ledger.push(e);
-  }
-}
-
-function readRow(sheet, cols, r) {
-  const o = { row: r };
-  for (const [k, col] of Object.entries(cols)) {
-    let v = readCell(sheet, col + r);
-    if (DATE_FIELDS.has(k)) v = typeof v === "number" ? fromSerial(v) : (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
-    else if (NUM_FIELDS.has(k)) v = v === null || v === "" ? null : Number(v);
-    else v = v === null ? "" : String(v);
-    o[k] = v;
-  }
-  return o;
-}
-
-function writeRow(sheet, cols, r, obj) {
-  for (const [k, col] of Object.entries(cols)) {
-    let v = obj[k];
-    if (DATE_FIELDS.has(k)) v = v ? toSerial(v) : null;
-    else if (NUM_FIELDS.has(k)) v = v === null || v === undefined || v === "" || Number.isNaN(+v) ? null : +v;
-    else v = v ? String(v) : null;
-    writeCell(sheet, col + r, v);
-  }
-  markChanged();
-}
 
 function firstFreeRow(list, first, last) {
   const used = new Set(list.map((x) => x.row));
@@ -773,65 +641,213 @@ function renderLedger() {
     : `<tr><td colspan="6" class="empty">這個月還沒有收支紀錄。</td></tr>`;
 }
 
-/* ---------------- change tracking & save ---------------- */
+/* ---------------- change tracking ---------------- */
 function markChanged() {
   state.changes++;
   $("dirty-badge").hidden = false;
   $("dirty-badge").textContent = `已修改 ${state.changes} 項`;
 }
 
-async function save() {
-  if (!state.zip) return;
-  const btn = $("btn-save");
-  btn.disabled = true;
-  btn.textContent = "準備檔案中…";
-  try {
-    for (const name of state.dirtySheets) state.zip.file(state.paths[name], serialize(state.docs[name]));
-    // Ask Excel to recalculate every formula when the file is opened.
-    let calcPr = state.wbDoc.getElementsByTagNameNS(NS, "calcPr")[0];
-    if (!calcPr) {
-      calcPr = state.wbDoc.createElementNS(NS, "calcPr");
-      const root = state.wbDoc.documentElement;
-      const before = ["oleSize", "customWorkbookViews", "pivotCaches", "smartTagPr", "smartTagTypes", "webPublishing", "fileRecoveryPr", "webPublishObjects", "extLst"]
-        .map((n) => root.getElementsByTagNameNS(NS, n)[0]).find(Boolean);
-      root.insertBefore(calcPr, before || null);
-    }
-    calcPr.setAttribute("fullCalcOnLoad", "1");
-    state.zip.file("xl/workbook.xml", serialize(state.wbDoc));
-    const blob = await state.zip.generateAsync({ type: "blob", compression: "DEFLATE", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+/* ---------------- read-only Excel preview ---------------- */
+const XL_SHEETS = ["訂房紀錄", "收支記帳", "房況月曆", "月報表", "設定"];
+const pv = { sheet: "訂房紀錄", month: "", year: 0 };
+const colLetter = (n) => { let s = ""; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+const xDate = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return `${y}/${m}/${d}`; };
+const xMoney = (n) => (n === null || n === undefined || n === "" ? "" : Math.round(n) === 0 ? "-" : Math.round(n).toLocaleString("en-US"));
+const xPct = (x) => (x ? (x * 100).toFixed(1) + "%" : "-");
+const C = (v, c = "", s = 1) => ({ v, c, s });
 
-    let savedInPlace = false;
-    if (state.handle && state.handle.createWritable) {
-      try {
-        if (state.handle.requestPermission && (await state.handle.requestPermission({ mode: "readwrite" })) !== "granted") throw new Error("permission");
-        const w = await state.handle.createWritable();
-        await w.write(blob);
-        await w.close();
-        savedInPlace = true;
-      } catch (err) {
-        console.warn(err);
-        toast("無法直接存回原檔（檔案可能正在 Excel 中開啟）。已改為下載新檔。");
-      }
-    }
-    if (!savedInPlace) download(blob, state.fileName);
-    if (savedInPlace) toast(`已儲存到「${state.fileName}」`);
-    else toast(state.changes ? `已下載 Excel（包含你修改的 ${state.changes} 項）` : "已下載範例 Excel");
-  } catch (err) {
-    console.error(err);
-    toast("下載失敗：" + err.message);
-  } finally {
-    btn.textContent = "下載 Excel";
-    btn.disabled = false;
-  }
+function checkText(b) {
+  if (!b.name) return "";
+  if (!b.in || !b.out) return "缺入住或退房日";
+  if (b.out <= b.in) return "退房日要晚於入住日";
+  if (b.status === "取消") return "";
+  if (overlapping(b).length) return "⚠ 重複訂房";
+  if (b.status === "已退房" && calc(b).unpaid > 0) return "退房未結清";
+  return "";
 }
 
-function download(blob, name) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name || "民宿訂房記帳表.xlsx";
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+function gridHTML(rows, widths, rowNumbers) {
+  const n = widths.length;
+  let h = `<table class="xl"><colgroup><col style="width:42px">${widths.map((w) => `<col style="width:${w}px">`).join("")}</colgroup>`;
+  h += `<thead><tr><th class="xl-corner"></th>${widths.map((_, i) => `<th>${colLetter(i + 1)}</th>`).join("")}</tr></thead><tbody>`;
+  rows.forEach((cells, i) => {
+    const rn = rowNumbers ? rowNumbers[i] : i + 1;
+    h += `<tr><th class="xl-rn">${rn}</th>`;
+    let col = 0;
+    for (const cell of cells) {
+      if (col >= n) break;
+      const c = cell || C("");
+      const span = Math.min(c.s || 1, n - col);
+      h += `<td${span > 1 ? ` colspan="${span}"` : ""} class="${c.c}">${esc(c.v)}</td>`;
+      col += span;
+    }
+    while (col < n) { h += "<td></td>"; col++; }
+    h += "</tr>";
+  });
+  return h + "</tbody></table>";
+}
+
+function sheetBookings() {
+  const heads = ["訂單編號", "訂房日期", "房客姓名", "電話", "房間", "入住日", "退房日", "晚數", "人數", "訂房管道", "定價", "折扣", "應收金額", "已收訂金", "已收尾款", "未收金額", "平台抽成", "狀態", "檢查", "備註"];
+  const auto = new Set([0, 7, 10, 12, 15, 16, 18]);
+  const rows = [[C("訂房紀錄", "xl-title", 8)], [C("每筆訂房填一列。藍綠色標題的欄位自己填，灰色標題的欄位會自動計算，不用填。", "xl-sub", 20)],
+    heads.map((t, i) => C(t, auto.has(i) ? "h-auto" : "h-in"))];
+  const nums = [1, 2, 3];
+  const byRow = new Map(state.bookings.map((b) => [b.row, b]));
+  const maxRow = Math.max(BK.first + 5, ...state.bookings.map((b) => b.row + 5));
+  for (let r = BK.first; r <= maxRow; r++) {
+    const b = byRow.get(r);
+    nums.push(r);
+    if (!b) { rows.push([]); continue; }
+    const k = calc(b), cx = b.status === "取消" ? " x-cancel" : "", chk = checkText(b);
+    rows.push([
+      C(bookingId(b), "ctr" + cx), C(xDate(b.booked), "in ctr" + cx), C(b.name, "in" + cx), C(b.phone, "in" + cx), C(b.room, "in ctr" + cx),
+      C(xDate(b.in), "in ctr" + cx), C(xDate(b.out), "in ctr" + cx), C(k.nights || "", "ctr" + cx), C(b.ppl ?? "", "in ctr" + cx), C(b.channel, "in ctr" + cx),
+      C(k.valid ? xMoney(k.price) : "", "num" + cx), C(xMoney(b.discount), "in num" + cx), C(k.valid ? xMoney(k.due) : "", "num" + cx),
+      C(xMoney(b.deposit), "in num" + cx), C(xMoney(b.balance), "in num" + cx),
+      C(k.valid ? xMoney(k.unpaid) : "", "num" + (k.unpaid > 0 ? " x-red" : "") + cx),
+      C(k.valid && b.status !== "取消" ? xMoney(k.fee) : "", "num" + cx), C(b.status, "in ctr" + cx),
+      C(chk, "ctr " + (chk === "⚠ 重複訂房" ? "x-dup" : chk ? "x-warn" : "")), C(b.note, "in" + cx),
+    ]);
+  }
+  return gridHTML(rows, [64, 82, 72, 104, 44, 82, 82, 40, 40, 96, 66, 56, 72, 70, 70, 70, 64, 60, 100, 200], nums);
+}
+
+function sheetLedger() {
+  const rows = [[C("收支記帳", "xl-title", 4)], [C("房間收入會從「訂房紀錄」自動計算，這裡只記其他收入（早餐、接駁等）和各項支出。", "xl-sub", 7)],
+    ["日期", "收入／支出", "類別", "說明", "金額", "付款方式", "備註"].map((t) => C(t, "h-in"))];
+  const nums = [1, 2, 3];
+  const byRow = new Map(state.ledger.map((e) => [e.row, e]));
+  const maxRow = Math.max(LG.first + 5, ...state.ledger.map((e) => e.row + 5));
+  for (let r = LG.first; r <= maxRow; r++) {
+    const e = byRow.get(r);
+    nums.push(r);
+    rows.push(e ? [C(xDate(e.date), "in ctr"), C(e.kind, "in ctr"), C(e.cat, "in ctr"), C(e.desc, "in"), C(xMoney(e.amount), "in num"), C(e.pay, "in ctr"), C(e.note, "in")] : []);
+  }
+  return gridHTML(rows, [84, 84, 92, 190, 80, 80, 170], nums);
+}
+
+function sheetCalendar() {
+  const ym = pv.month, [y, m] = ym.split("-").map(Number);
+  const start = monthStart(ym), days = diffDays(start, monthStart(nextMonth(ym)));
+  const dates = Array.from({ length: 31 }, (_, i) => (i < days ? addDays(start, i) : null));
+  const active = state.bookings.filter((b) => b.status !== "取消" && b.in && b.out);
+  const rows = [[C("房況月曆", "xl-title", 3)],
+    [C("年", "ctr bold"), C(y, "xl-input ctr"), C("月", "ctr bold"), C(m, "xl-input ctr"), C(""), C("改黃色格子的年、月，就會顯示該月房況。格子裡是房客姓名，紅底代表重複訂房。", "xl-sub", 20)],
+    [C("房號", "h-in"), C("房型", "h-in"), ...dates.map((d) => C(d ? +d.slice(8) : "", d && [5, 6].includes(dow(d)) ? "h-we" : "h-in"))],
+    [C("", "h-in"), C("", "h-in"), ...dates.map((d) => C(d ? WEEK[dow(d)] : "", d && [5, 6].includes(dow(d)) ? "h-we" : "h-in"))]];
+  const free = dates.map(() => state.settings.rooms.length);
+  for (let i = 0; i < 10; i++) {
+    const room = state.settings.rooms[i];
+    if (!room) { rows.push([C("", "ctr"), C("")]); continue; }
+    rows.push([C(room.no, "ctr bold"), C(room.type, "ctr bold"), ...dates.map((d, j) => {
+      if (!d) return C("");
+      const here = active.filter((b) => b.room === room.no && b.in <= d && b.out > d);
+      if (here.length) free[j]--;
+      return here.length ? C(here[here.length - 1].name, here.length > 1 ? "x-caldup ctr" : "x-cal ctr") : C("");
+    })]);
+  }
+  rows.push([C("空房數", "x-total ctr", 2), ...dates.map((d, j) => C(d ? free[j] : "", "x-total ctr"))]);
+  return gridHTML(rows, [52, 96, ...Array(31).fill(54)]);
+}
+
+function sheetReport() {
+  const yr = pv.year;
+  const months = Array.from({ length: 12 }, (_, i) => `${yr}-${String(i + 1).padStart(2, "0")}`);
+  const st = months.map((ym) => ({ ym, ...monthStats(ym), sellable: state.settings.rooms.length * diffDays(monthStart(ym), monthStart(nextMonth(ym))) }));
+  const sum = (k) => st.reduce((a, s) => a + s[k], 0);
+  const T = { orders: sum("orders"), nights: sum("nights"), sellable: sum("sellable"), revenue: sum("revenue"), otherIn: sum("otherIn"), fees: sum("fees"), expense: sum("expense"), net: sum("net") };
+  const open = st.filter((s) => s.orders > 0);
+  const openOcc = open.reduce((a, s) => a + s.sellable, 0) ? open.reduce((a, s) => a + s.nights, 0) / open.reduce((a, s) => a + s.sellable, 0) : 0;
+  const unpaid = state.bookings.reduce((a, b) => a + (b.status === "取消" ? 0 : calc(b).unpaid), 0);
+  const rows = [[C("月報表", "xl-title", 3)],
+    [C("年度", "ctr bold"), C(yr, "xl-input ctr"), C("改黃色格子的年度，報表會自動更新。住房收入、抽成以入住日歸月；入住晚數依實際住宿日期跨月拆分。", "xl-sub", 9)],
+    [],
+    [C("全年住房收入", "x-kpil ctr", 2), C("全年淨利", "x-kpil ctr", 2), C("營業月份住房率", "x-kpil ctr", 2), C("尚未收款", "x-kpil ctr", 2)],
+    [C(xMoney(T.revenue), "x-kpiv ctr", 2), C(xMoney(T.net), "x-kpiv ctr", 2), C(xPct(openOcc), "x-kpiv ctr", 2), C(xMoney(unpaid), "x-kpiv ctr", 2)],
+    ["月份", "訂單數", "入住晚數", "可售房晚", "住房率", "平均房價", "住房收入", "其他收入", "平台抽成", "營運支出", "淨利"].map((t) => C(t, "h-in"))];
+  const line = (label, s, cls = "") => [C(label, "ctr" + cls), C(s.orders || "-", "ctr" + cls), C(s.nights || "-", "ctr" + cls), C(s.sellable, "ctr" + cls),
+    C(xPct(s.sellable ? s.nights / s.sellable : 0), "ctr" + cls), C(xMoney(s.nights ? Math.round(s.revenue / s.nights) : 0), "num" + cls),
+    C(xMoney(s.revenue), "num" + cls), C(xMoney(s.otherIn), "num" + cls), C(xMoney(s.fees), "num" + cls), C(xMoney(s.expense), "num" + cls), C(xMoney(s.net), "num" + cls)];
+  st.forEach((s, i) => rows.push(line(`${i + 1}月`, s)));
+  rows.push(line("全年", T, " x-total bold"));
+  rows.push([], []);
+  rows.push([C("各訂房管道（全年）", "xl-title2", 4)]);
+  rows.push(["訂房管道", "訂單數", "住房收入", "收入佔比", "平台抽成"].map((t) => C(t, "h-in")));
+  const y0 = `${yr}-01-01`, y1 = `${yr + 1}-01-01`;
+  for (let i = 0; i < 8; i++) {
+    const ch = state.settings.channels[i];
+    if (!ch) { rows.push([]); continue; }
+    const list = state.bookings.filter((b) => b.channel === ch.name && b.status !== "取消" && b.in && b.in >= y0 && b.in < y1);
+    const rev = list.reduce((a, b) => a + calc(b).due, 0), fee = list.reduce((a, b) => a + calc(b).fee, 0);
+    rows.push([C(ch.name, "ctr"), C(list.length || "-", "ctr"), C(xMoney(rev), "num"), C(xPct(T.revenue ? rev / T.revenue : 0), "num"), C(xMoney(fee), "num")]);
+  }
+  return gridHTML(rows, [76, 70, 74, 74, 70, 74, 84, 76, 76, 76, 84]) + chartSVG(st);
+}
+
+function chartSVG(st) {
+  const W = 640, H = 240, pad = { l: 64, r: 16, t: 34, b: 44 };
+  const max = Math.max(1000, ...st.map((s) => Math.max(s.revenue, s.expense)));
+  const step = Math.pow(10, Math.floor(Math.log10(max))) * (max / Math.pow(10, Math.floor(Math.log10(max))) > 5 ? 2 : 1);
+  const top = Math.ceil(max / step) * step;
+  const ih = H - pad.t - pad.b, iw = W - pad.l - pad.r, bw = iw / 12;
+  const yv = (v) => pad.t + ih - (v / top) * ih;
+  let g = "";
+  for (let v = 0; v <= top; v += step) g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${yv(v)}" y2="${yv(v)}" stroke="#E5E7EB"/><text x="${pad.l - 6}" y="${yv(v) + 4}" text-anchor="end" font-size="11" fill="#6B7280">${v.toLocaleString("en-US")}</text>`;
+  st.forEach((s, i) => {
+    const x = pad.l + i * bw + bw * 0.15, w = bw * 0.33;
+    g += `<rect x="${x}" y="${yv(s.revenue)}" width="${w}" height="${pad.t + ih - yv(s.revenue)}" fill="#0F5E6E"/>`;
+    g += `<rect x="${x + w + 1}" y="${yv(s.expense)}" width="${w}" height="${pad.t + ih - yv(s.expense)}" fill="#D97706"/>`;
+    g += `<text x="${pad.l + i * bw + bw / 2}" y="${H - pad.b + 16}" text-anchor="middle" font-size="11" fill="#374151">${i + 1}月</text>`;
+  });
+  return `<div class="xl-chart"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="每月住房收入與營運支出長條圖">
+    <text x="${W / 2}" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">每月住房收入與營運支出</text>${g}
+    <rect x="${W / 2 - 110}" y="${H - 16}" width="10" height="10" fill="#0F5E6E"/><text x="${W / 2 - 96}" y="${H - 7}" font-size="11" fill="#374151">住房收入</text>
+    <rect x="${W / 2 + 10}" y="${H - 16}" width="10" height="10" fill="#D97706"/><text x="${W / 2 + 24}" y="${H - 7}" font-size="11" fill="#374151">營運支出</text></svg></div>`;
+}
+
+function sheetSettings() {
+  const S = state.settings;
+  const blank = () => Array(15).fill(null);
+  const rows = [[C("基本設定", "xl-title", 4)], [C("房間、房價、訂房管道和收支類別都在這裡設定，其他工作表會自動引用。黃底藍字的格子可以修改。", "xl-sub", 15)], blank()];
+  const head = blank();
+  [[1, "房號"], [2, "房型"], [3, "平日價（每晚）"], [4, "假日價（週五、六晚）"], [5, "可住人數"], [7, "訂房管道"], [8, "平台抽成"], [10, "訂單狀態"], [12, "收支類別"], [14, "付款方式"]].forEach(([i, t]) => (head[i] = C(t, "h-in")));
+  rows.push(head);
+  for (let i = 0; i < 16; i++) {
+    const r = blank();
+    if (i < 10) { const rm = S.rooms[i] || {}; r[1] = C(rm.no ?? "", "xl-input ctr"); r[2] = C(rm.type ?? "", "xl-input ctr"); r[3] = C(xMoney(rm.wk ?? ""), "xl-input num"); r[4] = C(xMoney(rm.we ?? ""), "xl-input num"); r[5] = C(rm.cap ?? "", "xl-input ctr"); }
+    if (i < 8) { const ch = S.channels[i]; r[7] = C(ch ? ch.name : "", "xl-input ctr"); r[8] = C(ch ? Math.round(ch.rate * 100) + "%" : "", "xl-input ctr"); }
+    if (i < 4) r[10] = C(S.statuses[i] || "", "ctr");
+    r[12] = C(S.categories[i] || "", "xl-input ctr");
+    if (i < 6) r[14] = C(S.payments[i] || "", "xl-input ctr");
+    if (i === 11) { r[1] = C("房間數", "bold"); r[2] = C(S.rooms.length, "ctr bold"); }
+    rows.push(r);
+  }
+  return gridHTML(rows.map((r) => r.map((c) => c || C(""))), [20, 64, 120, 110, 150, 76, 20, 110, 76, 20, 84, 20, 100, 20, 84]);
+}
+
+function renderPreview() {
+  const tools = $("xl-tools");
+  if (pv.sheet === "房況月曆") {
+    tools.hidden = false;
+    tools.innerHTML = `<button type="button" class="btn small" data-pv="m-1" aria-label="上個月">‹</button><strong>${monthLabel(pv.month)}</strong><button type="button" class="btn small" data-pv="m+1" aria-label="下個月">›</button><span class="muted">（在 Excel 裡是改黃色格子的年、月）</span>`;
+  } else if (pv.sheet === "月報表") {
+    tools.hidden = false;
+    tools.innerHTML = `<button type="button" class="btn small" data-pv="y-1" aria-label="上一年">‹</button><strong>${pv.year} 年</strong><button type="button" class="btn small" data-pv="y+1" aria-label="下一年">›</button><span class="muted">（在 Excel 裡是改黃色格子的年度）</span>`;
+  } else tools.hidden = true;
+  const fn = { "訂房紀錄": sheetBookings, "收支記帳": sheetLedger, "房況月曆": sheetCalendar, "月報表": sheetReport, "設定": sheetSettings }[pv.sheet];
+  $("xl-sheet").innerHTML = fn();
+  $("xl-sheet").scrollTo(0, 0);
+  for (const b of $("xl-tabs").children) b.setAttribute("aria-selected", String(b.dataset.sheet === pv.sheet));
+}
+
+function openPreview(sheet) {
+  pv.sheet = sheet || pv.sheet;
+  pv.month = state.calMonth;
+  pv.year = +todayISO().slice(0, 4);
+  renderPreview();
+  $("dlg-excel").showModal();
 }
 
 let toastTimer;
@@ -934,7 +950,7 @@ function submitBooking(ev) {
   let row = state.editingBooking ? state.editingBooking.row : firstFreeRow(state.bookings, BK.first, BK.last);
   if (!row) { $("f-error").textContent = `檔案最多可存 ${BK.last - BK.first + 1} 筆訂房，已經滿了。`; $("f-error").hidden = false; return; }
   b.row = row;
-  writeRow(SHEET.bookings, BK.cols, row, b);
+  markChanged();
   if (state.editingBooking) Object.assign(state.editingBooking, b);
   else state.bookings.push(b);
   $("dlg-booking").close();
@@ -946,8 +962,7 @@ function deleteBooking() {
   const del = $("bk-delete");
   if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "確定刪除？"; return; }
   const b = state.editingBooking;
-  const blank = Object.fromEntries(Object.keys(BK.cols).map((k) => [k, null]));
-  writeRow(SHEET.bookings, BK.cols, b.row, blank);
+  markChanged();
   state.bookings = state.bookings.filter((x) => x !== b);
   $("dlg-booking").close();
   render();
@@ -1008,7 +1023,7 @@ function submitLedger(ev) {
   const row = state.editingLedger ? state.editingLedger.row : firstFreeRow(state.ledger, LG.first, LG.last);
   if (!row) { $("lg-error").textContent = `檔案最多可存 ${LG.last - LG.first + 1} 筆收支，已經滿了。`; $("lg-error").hidden = false; return; }
   e.row = row;
-  writeRow(SHEET.ledger, LG.cols, row, e);
+  markChanged();
   if (state.editingLedger) Object.assign(state.editingLedger, e); else state.ledger.push(e);
   const wasEdit = !!state.editingLedger;
   if (monthOf(e.date) !== state.lgMonth) state.lgMonth = monthOf(e.date);
@@ -1021,40 +1036,28 @@ function deleteLedger() {
   const del = $("lg-delete");
   if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "確定刪除？"; return; }
   const e = state.editingLedger;
-  writeRow(SHEET.ledger, LG.cols, e.row, Object.fromEntries(Object.keys(LG.cols).map((k) => [k, null])));
+  markChanged();
   state.ledger = state.ledger.filter((x) => x !== e);
   resetLedgerForm();
   render();
   toast("已刪除這筆收支。");
 }
 
-/* ---------------- open files ---------------- */
-async function openFromBuffer(buf, name, handle) {
-  try {
-    await loadWorkbook(buf, name, handle);
-    const m = monthOf(todayISO());
-    state.calMonth = m;
-    state.lgMonth = m;
-    $("start").hidden = true;
-    $("app").hidden = false;
-    $("btn-save").disabled = false;
-    $("btn-save").title = "下載包含目前修改的 Excel 檔";
-    resetLedgerForm();
-    render();
-    switchTab("overview");
-    toast(`已載入範例資料：${state.bookings.length} 筆訂房、${state.ledger.length} 筆收支`);
-  } catch (err) {
-    console.error(err);
-    showStartError(err.message || "無法讀取這個檔案。");
-  }
-}
-
-function showStartError(msg) {
-  $("start").hidden = false;
-  $("app").hidden = true;
-  $("start").querySelector("h1").textContent = "無法載入範例資料";
-  $("start-error").textContent = msg;
-  $("start-error").hidden = false;
+/* ---------------- start ---------------- */
+function start() {
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  state.settings = clone(SAMPLE_DATA.settings);
+  state.bookings = clone(SAMPLE_DATA.bookings);
+  state.ledger = clone(SAMPLE_DATA.ledger);
+  const m = monthOf(todayISO());
+  state.calMonth = m;
+  state.lgMonth = m;
+  $("start").hidden = true;
+  $("app").hidden = false;
+  $("btn-preview").disabled = false;
+  resetLedgerForm();
+  render();
+  switchTab("overview");
 }
 
 /* ---------------- tabs & events ---------------- */
@@ -1064,7 +1067,21 @@ function switchTab(name) {
 }
 
 document.querySelectorAll(".tabs button").forEach((btn) => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
-$("btn-save").addEventListener("click", save);
+$("btn-preview").addEventListener("click", () => openPreview());
+$("xl-close").addEventListener("click", () => $("dlg-excel").close());
+$("xl-tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-sheet]"); if (b) { pv.sheet = b.dataset.sheet; renderPreview(); } });
+$("xl-tools").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pv]");
+  if (!b) return;
+  const a = b.dataset.pv;
+  if (a === "m-1") pv.month = prevMonth(pv.month);
+  if (a === "m+1") pv.month = nextMonth(pv.month);
+  if (a === "y-1") pv.year--;
+  if (a === "y+1") pv.year++;
+  renderPreview();
+});
+$("xl-sheet").addEventListener("contextmenu", (e) => e.preventDefault());
+$("xl-sheet").addEventListener("copy", (e) => e.preventDefault());
 
 $("btn-new-booking").addEventListener("click", () => openBooking(null));
 $("bk-search").addEventListener("input", renderBookings);
@@ -1124,16 +1141,7 @@ $("lg-rows").addEventListener("click", (e) => {
 $("lg-prev").addEventListener("click", () => { state.lgMonth = prevMonth(state.lgMonth); resetLedgerForm(); renderLedger(); });
 $("lg-next").addEventListener("click", () => { state.lgMonth = nextMonth(state.lgMonth); resetLedgerForm(); renderLedger(); });
 
-(async () => {
-  try {
-    const res = await fetch("sample.xlsx", { cache: "no-store" });
-    if (!res.ok) throw new Error(String(res.status));
-    await openFromBuffer(await res.arrayBuffer(), "民宿訂房記帳表_範例.xlsx", null);
-  } catch (err) {
-    console.error(err);
-    showStartError("範例資料載入失敗，請重新整理頁面。");
-  }
-})();
+start();
 </script>
 </body>
 </html>

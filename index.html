@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>民宿訂房小幫手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Layout: top bar with save, four tabs (overview, bookings, calendar, ledger); forms open in a dialog. */
+:root {
+  --bg: #F1F5F6;
+  --surface: #FFFFFF;
+  --ink: #16252B;
+  --muted: #5E6E75;
+  --line: #D6DFE2;
+  --brand: #0F5E6E;
+  --brand-soft: #E3F0F2;
+  --accent: #C46A06;
+  --accent-soft: #FDF1E1;
+  --danger: #B42318;
+  --danger-soft: #FDE7E5;
+  --ok: #18794E;
+  --ok-soft: #E3F4EA;
+  --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10181B; --surface: #172227; --ink: #E4ECEE; --muted: #97A8AE; --line: #2A3A40;
+    --brand: #5FB3C2; --brand-soft: #18343B; --accent: #F0A04B; --accent-soft: #3A2A16;
+    --danger: #F28B82; --danger-soft: #3D1F1D; --ok: #6FCF97; --ok-soft: #173327; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10181B; --surface: #172227; --ink: #E4ECEE; --muted: #97A8AE; --line: #2A3A40;
+  --brand: #5FB3C2; --brand-soft: #18343B; --accent: #F0A04B; --accent-soft: #3A2A16;
+  --danger: #F28B82; --danger-soft: #3D1F1D; --ok: #6FCF97; --ok-soft: #173327; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* top bar */
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { width: 36px; height: 36px; border-radius: 9px; background: var(--brand); color: var(--surface);
+  display: grid; place-items: center; font-weight: 700; font-size: 18px; flex: none; }
+.brand strong { display: block; font-size: 16px; }
+.brand small { display: block; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
+.top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.badge { font-size: 12.5px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+
+/* buttons */
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+.btn:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--surface); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); color: var(--surface); }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+.btn.danger.armed { background: var(--danger); color: var(--surface); }
+.btn.link { border: 0; background: none; color: var(--brand); text-decoration: underline; padding: 6px; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn.big { padding: 12px 24px; font-size: 16px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* start screen */
+.start { display: grid; place-items: center; padding: 48px 16px; }
+.start-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 32px; max-width: 560px; width: 100%; display: grid; gap: 16px; text-align: center; }
+.start-card h1 { margin: 0; font-size: 24px; text-wrap: balance; }
+.start-card p { margin: 0; color: var(--muted); }
+.drop { border: 2px dashed var(--line); border-radius: 12px; padding: 28px 16px; display: grid; gap: 10px; justify-items: center; color: var(--muted); }
+.drop.over { border-color: var(--brand); background: var(--brand-soft); }
+.error { color: var(--danger) !important; background: var(--danger-soft); border-radius: 8px; padding: 10px 12px; text-align: left; }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; padding: 10px 20px 0; max-width: 1180px; margin: 0 auto; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabs button { border: 0; background: none; padding: 10px 18px; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: var(--muted); font-size: 15.5px; }
+.tabs button[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); font-weight: 700; }
+main { max-width: 1180px; margin: 0 auto; padding: 20px; }
+.panel { display: grid; gap: 18px; }
+
+/* cards & sections */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.card h2 { margin: 0 0 12px; font-size: 16px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.muted { color: var(--muted); }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 2px; }
+.kpi span { font-size: 13px; color: var(--muted); }
+.kpi b { font-size: 24px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.kpi small { font-size: 12.5px; color: var(--muted); }
+.kpi.alert b { color: var(--danger); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.month-nav strong { min-width: 112px; text-align: center; font-size: 17px; }
+.month-nav button { width: 34px; height: 34px; padding: 0; }
+
+/* lists */
+.list { display: grid; gap: 8px; }
+.item { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.item.clickable { cursor: pointer; }
+.item.clickable:hover { border-color: var(--brand); }
+.room-tag { font-weight: 700; color: var(--brand); background: var(--brand-soft); border-radius: 6px; padding: 2px 8px; font-variant-numeric: tabular-nums; }
+.item .main strong { display: block; }
+.item .main small { color: var(--muted); }
+.empty { color: var(--muted); padding: 10px 2px; }
+.warn { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--danger-soft); color: var(--danger); }
+.warn.soft { background: var(--accent-soft); color: var(--accent); }
+.warn b { flex: none; }
+.warn button { margin-left: auto; }
+
+/* chips */
+.chip { display: inline-block; font-size: 12.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.chip.s-已確認 { background: var(--brand-soft); color: var(--brand); }
+.chip.s-已入住 { background: var(--ok-soft); color: var(--ok); }
+.chip.s-已退房 { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.chip.s-取消 { background: var(--bg); color: var(--muted); text-decoration: line-through; }
+.chip.due { background: var(--accent-soft); color: var(--accent); }
+.chip.dup { background: var(--danger-soft); color: var(--danger); }
+
+/* booking table */
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.search { flex: 1 1 220px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13.5px; }
+.filters button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--surface); font-weight: 500; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table.data { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+table.data th { font-size: 13px; color: var(--muted); font-weight: 500; background: var(--bg); }
+table.data td.num, table.data th.num { text-align: right; }
+table.data tbody tr { cursor: pointer; }
+table.data tbody tr:hover { background: var(--brand-soft); }
+table.data tbody tr.cancelled td { color: var(--muted); }
+table.data tbody tr:last-child td { border-bottom: 0; }
+.unpaid { color: var(--danger); font-weight: 700; }
+
+/* calendar */
+.cal-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table.cal { border-collapse: collapse; font-size: 12.5px; }
+table.cal th, table.cal td { border: 1px solid var(--line); text-align: center; padding: 0; }
+table.cal thead th { padding: 4px 0; min-width: 52px; font-weight: 500; background: var(--bg); color: var(--muted); }
+table.cal thead th.we { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+table.cal thead th.today { background: var(--brand); color: var(--surface); }
+table.cal th.roomh { position: sticky; left: 0; z-index: 2; background: var(--surface); min-width: 116px; text-align: left; padding: 6px 10px; }
+table.cal th.roomh b { color: var(--brand); }
+table.cal th.roomh small { display: block; color: var(--muted); font-weight: 400; }
+table.cal td button { width: 100%; height: 44px; border: 0; background: none; cursor: pointer; font-size: 12px; padding: 0 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+table.cal td button:hover { background: var(--brand-soft); }
+table.cal td.booked button { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+table.cal td.dup button { background: var(--danger-soft); color: var(--danger); }
+table.cal tfoot td { padding: 6px 0; font-weight: 700; background: var(--bg); }
+table.cal tfoot th { padding: 6px 10px; background: var(--bg); text-align: left; position: sticky; left: 0; }
+
+/* forms */
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field { display: grid; gap: 4px; align-content: start; }
+.field label { font-size: 13px; font-weight: 500; color: var(--muted); }
+.field label .req { color: var(--danger); }
+.field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.field textarea { min-height: 64px; resize: vertical; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.money-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 8px 16px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--brand); color: var(--surface); font-weight: 500; }
+
+.summary { background: var(--bg); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+.summary .line { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.summary .line span b { font-size: 16px; }
+
+dialog { border: 0; border-radius: 14px; padding: 0; width: min(680px, calc(100vw - 24px)); max-height: calc(100vh - 32px); background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+dialog::backdrop { background: rgba(10, 25, 30, .45); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.dlg-head h2 { margin: 0; font-size: 18px; }
+.dlg-body { padding: 18px 20px; display: grid; gap: 14px; }
+.dlg-foot { display: flex; gap: 8px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: var(--surface); }
+.dlg-foot .spacer { flex: 1; }
+.icon-btn { border: 0; background: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); padding: 4px 8px; }
+
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--surface); padding: 10px 18px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 50; }
+#toast:empty { display: none; }
+
+footer.note { max-width: 1180px; margin: 0 auto; padding: 0 20px 28px; color: var(--muted); font-size: 12.5px; }
+
+@media (max-width: 860px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .topbar { padding: 10px 14px; }
+  main { padding: 16px 14px; }
+  .tabs { padding: 8px 10px 0; }
+  .form-grid, .money-row { grid-template-columns: 1fr; }
+  .brand small { max-width: 40vw; }
+  .kpi b { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">宿</span>
+    <div><strong>民宿訂房小幫手</strong><small id="file-label">尚未開啟檔案</small></div>
+  </div>
+  <div class="top-actions">
+    <span id="dirty-badge" class="badge" hidden></span>
+    <button type="button" id="btn-open-other" class="btn" hidden>開啟其他檔案</button>
+    <button type="button" id="btn-save" class="btn primary" disabled>儲存到 Excel</button>
+  </div>
+</header>
+
+<section id="start" class="start">
+  <div class="start-card">
+    <h1>開啟你的訂房記帳表</h1>
+    <p>選擇「民宿訂房記帳表」Excel 檔，就能用簡單的畫面新增訂房、看房況、記帳。檔案只在你的電腦上處理，不會上傳到任何地方。</p>
+    <div id="drop" class="drop">
+      <button type="button" id="btn-open" class="btn primary big">選擇 Excel 檔</button>
+      <span>或把檔案拖曳到這裡</span>
+    </div>
+    <button type="button" id="btn-sample" class="btn link">沒有檔案？用範例檔試用</button>
+    <p id="start-error" class="error" hidden></p>
+    <input type="file" id="file-input" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <nav class="tabs" role="tablist" aria-label="功能">
+    <button type="button" role="tab" id="tabbtn-overview" data-tab="overview" aria-selected="true">總覽</button>
+    <button type="button" role="tab" id="tabbtn-bookings" data-tab="bookings" aria-selected="false">訂房</button>
+    <button type="button" role="tab" id="tabbtn-calendar" data-tab="calendar" aria-selected="false">房況</button>
+    <button type="button" role="tab" id="tabbtn-ledger" data-tab="ledger" aria-selected="false">收支</button>
+  </nav>
+  <main>
+    <section id="tab-overview" class="panel" role="tabpanel" aria-labelledby="tabbtn-overview"></section>
+    <section id="tab-bookings" class="panel" role="tabpanel" aria-labelledby="tabbtn-bookings" hidden>
+      <div class="toolbar">
+        <input type="search" id="bk-search" class="search" placeholder="搜尋房客姓名、電話或房號" aria-label="搜尋訂房">
+        <div class="filters" id="bk-filters">
+          <button type="button" data-filter="active" aria-pressed="true">未退房</button>
+          <button type="button" data-filter="已退房" aria-pressed="false">已退房</button>
+          <button type="button" data-filter="取消" aria-pressed="false">取消</button>
+          <button type="button" data-filter="all" aria-pressed="false">全部</button>
+        </div>
+        <button type="button" class="btn primary" id="btn-new-booking">＋ 新增訂房</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>編號</th><th>房客</th><th>房間</th><th>入住 → 退房</th><th>管道</th><th class="num">應收</th><th class="num">未收</th><th>狀態</th></tr></thead>
+          <tbody id="bk-rows"></tbody>
+        </table>
+      </div>
+      <p class="muted" id="bk-count"></p>
+    </section>
+    <section id="tab-calendar" class="panel" role="tabpanel" aria-labelledby="tabbtn-calendar" hidden>
+      <div class="row">
+        <div class="month-nav">
+          <button type="button" class="btn" id="cal-prev" aria-label="上個月">‹</button>
+          <strong id="cal-title"></strong>
+          <button type="button" class="btn" id="cal-next" aria-label="下個月">›</button>
+          <button type="button" class="btn small" id="cal-today">本月</button>
+        </div>
+        <span class="muted">點空白格子新增訂房，點房客姓名修改訂房。</span>
+      </div>
+      <div class="cal-wrap"><table class="cal" id="cal-table"></table></div>
+    </section>
+    <section id="tab-ledger" class="panel" role="tabpanel" aria-labelledby="tabbtn-ledger" hidden>
+      <div class="row">
+        <div class="month-nav">
+          <button type="button" class="btn" id="lg-prev" aria-label="上個月">‹</button>
+          <strong id="lg-title"></strong>
+          <button type="button" class="btn" id="lg-next" aria-label="下個月">›</button>
+        </div>
+      </div>
+      <div class="kpis" id="lg-kpis"></div>
+      <form class="card" id="lg-form" novalidate>
+        <div class="row" style="margin-bottom:12px">
+          <h2 id="lg-form-title" style="margin:0">記一筆</h2>
+          <div class="seg" role="group" aria-label="收入或支出">
+            <button type="button" data-kind="支出" aria-pressed="true">支出</button>
+            <button type="button" data-kind="收入" aria-pressed="false">收入</button>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label for="lg-date">日期 <span class="req">*</span></label><input type="date" id="lg-date" required></div>
+          <div class="field"><label for="lg-cat">類別 <span class="req">*</span></label><select id="lg-cat" required></select></div>
+          <div class="field"><label for="lg-amount">金額 <span class="req">*</span></label><input type="number" id="lg-amount" min="0" step="1" inputmode="numeric" required></div>
+          <div class="field"><label for="lg-pay">付款方式</label><select id="lg-pay"></select></div>
+          <div class="field full"><label for="lg-desc">說明</label><input type="text" id="lg-desc" placeholder="例如：床單送洗、10 月電費"></div>
+        </div>
+        <p class="error" id="lg-error" hidden></p>
+        <div class="row" style="margin-top:12px; justify-content:flex-end">
+          <button type="button" class="btn danger" id="lg-delete" hidden>刪除這筆</button>
+          <button type="button" class="btn" id="lg-cancel" hidden>取消修改</button>
+          <button type="submit" class="btn primary" id="lg-submit">新增</button>
+        </div>
+      </form>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>日期</th><th>收支</th><th>類別</th><th>說明</th><th class="num">金額</th><th>付款方式</th></tr></thead>
+          <tbody id="lg-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer class="note">房間、房價、訂房管道和收支類別請在 Excel 的「設定」工作表修改。按「儲存到 Excel」後，Excel 裡的房況月曆和月報表會自動更新。</footer>
+</div>
+
+<dialog id="dlg-booking" aria-labelledby="bk-dlg-title">
+  <form id="bk-form" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="bk-dlg-title">新增訂房</h2><button type="button" class="icon-btn" id="bk-close" aria-label="關閉">×</button></div>
+    <div class="dlg-body">
+      <div class="form-grid">
+        <div class="field"><label for="f-name">房客姓名 <span class="req">*</span></label><input type="text" id="f-name" autocomplete="off" required></div>
+        <div class="field"><label for="f-phone">電話</label><input type="tel" id="f-phone" autocomplete="off"></div>
+        <div class="field"><label for="f-room">房間 <span class="req">*</span></label><select id="f-room" required></select></div>
+        <div class="field"><label for="f-ppl">人數</label><input type="number" id="f-ppl" min="1" step="1" inputmode="numeric"><span class="hint" id="f-ppl-hint"></span></div>
+        <div class="field"><label for="f-in">入住日 <span class="req">*</span></label><input type="date" id="f-in" required></div>
+        <div class="field"><label for="f-out">退房日 <span class="req">*</span></label><input type="date" id="f-out" required></div>
+        <div class="field"><label for="f-channel">訂房管道 <span class="req">*</span></label><select id="f-channel" required></select></div>
+        <div class="field"><label for="f-status">狀態 <span class="req">*</span></label><select id="f-status" required></select></div>
+      </div>
+      <div class="money-row">
+        <div class="field"><label for="f-discount">折扣</label><input type="number" id="f-discount" step="1" inputmode="numeric" placeholder="0"><span class="hint">填負數代表加價</span></div>
+        <div class="field"><label for="f-deposit">已收訂金</label><input type="number" id="f-deposit" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="f-balance">已收尾款</label><input type="number" id="f-balance" min="0" step="1" inputmode="numeric" placeholder="0"><button type="button" class="btn link small" id="f-payall" style="justify-self:start;padding:2px 0">收齊尾款</button></div>
+      </div>
+      <div class="summary" id="f-summary" aria-live="polite"></div>
+      <div id="f-conflict" hidden></div>
+      <div class="form-grid">
+        <div class="field"><label for="f-booked">訂房日期</label><input type="date" id="f-booked"></div>
+        <div class="field full"><label for="f-note">備註</label><textarea id="f-note"></textarea></div>
+      </div>
+      <p class="error" id="f-error" hidden></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="bk-delete" hidden>刪除這筆</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="bk-cancel">取消</button>
+      <button type="submit" class="btn primary" id="bk-submit">儲存這筆</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------
+ * Workbook layout (must match 民宿訂房記帳表)
+ * ------------------------------------------------------------------ */
+const SHEET = { settings: "設定", bookings: "訂房紀錄", ledger: "收支記帳" };
+const BK = { first: 4, last: 303, cols: { booked: "B", name: "C", phone: "D", room: "E", in: "F", out: "G", ppl: "I",
+  channel: "J", discount: "L", deposit: "N", balance: "O", status: "R", note: "T" } };
+const LG = { first: 4, last: 503, cols: { date: "A", kind: "B", cat: "C", desc: "D", amount: "E", pay: "F", note: "G" } };
+const DATE_FIELDS = new Set(["booked", "in", "out", "date"]);
+const NUM_FIELDS = new Set(["ppl", "discount", "deposit", "balance", "amount"]);
+const NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+const RNS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+const XMLNS = "http://www.w3.org/XML/1998/namespace";
+
+const state = {
+  zip: null, fileName: "", handle: null, paths: {}, docs: {}, index: {}, strings: [],
+  settings: null, bookings: [], ledger: [], dirtySheets: new Set(), changes: 0,
+  calMonth: "", lgMonth: "", filter: "active", editingBooking: null, editingLedger: null, lgKind: "支出",
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = (n) => (Math.round(n || 0)).toLocaleString("zh-TW");
+const pct = (x) => (x * 100).toFixed(1) + "%";
+
+/* ---------------- dates (ISO yyyy-mm-dd, timezone-safe) ---------------- */
+const DAY = 86400000;
+const EPOCH = Date.UTC(1899, 11, 30);
+const isoToUTC = (iso) => { const [y, m, d] = iso.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+const toSerial = (iso) => Math.round((isoToUTC(iso) - EPOCH) / DAY);
+const fromSerial = (n) => new Date(EPOCH + Math.round(n) * DAY).toISOString().slice(0, 10);
+const addDays = (iso, n) => new Date(isoToUTC(iso) + n * DAY).toISOString().slice(0, 10);
+const diffDays = (a, b) => Math.round((isoToUTC(b) - isoToUTC(a)) / DAY);
+const dow = (iso) => new Date(isoToUTC(iso)).getUTCDay();
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const monthOf = (iso) => iso.slice(0, 7);
+const monthStart = (ym) => ym + "-01";
+const nextMonth = (ym) => { let [y, m] = ym.split("-").map(Number); m++; if (m > 12) { m = 1; y++; } return `${y}-${String(m).padStart(2, "0")}`; };
+const prevMonth = (ym) => { let [y, m] = ym.split("-").map(Number); m--; if (m < 1) { m = 12; y--; } return `${y}-${String(m).padStart(2, "0")}`; };
+const monthLabel = (ym) => { const [y, m] = ym.split("-").map(Number); return `${y} 年 ${m} 月`; };
+const md = (iso) => { const [, m, d] = iso.split("-").map(Number); return `${m}/${d}`; };
+const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
+
+/* ---------------- XML helpers ---------------- */
+const parseXML = (s) => new DOMParser().parseFromString(s, "application/xml");
+const serialize = (doc) => { const s = new XMLSerializer().serializeToString(doc); return s.startsWith("<?xml") ? s : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + s; };
+const colNum = (letters) => [...letters].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+const splitRef = (ref) => { const m = /^([A-Z]+)(\d+)$/.exec(ref); return { col: m[1], row: +m[2] }; };
+
+function buildIndex(name) {
+  const doc = state.docs[name];
+  const sheetData = doc.getElementsByTagNameNS(NS, "sheetData")[0];
+  const rows = new Map(), cells = new Map();
+  for (const row of sheetData.getElementsByTagNameNS(NS, "row")) {
+    rows.set(+row.getAttribute("r"), row);
+    for (const c of row.getElementsByTagNameNS(NS, "c")) cells.set(c.getAttribute("r"), c);
+  }
+  state.index[name] = { sheetData, rows, cells };
+}
+
+function readCell(name, ref) {
+  const c = state.index[name].cells.get(ref);
+  if (!c) return null;
+  const t = c.getAttribute("t");
+  if (t === "inlineStr") {
+    const is = c.getElementsByTagNameNS(NS, "is")[0];
+    if (!is) return null;
+    return [...is.getElementsByTagNameNS(NS, "t")].map((x) => x.textContent).join("");
+  }
+  const v = c.getElementsByTagNameNS(NS, "v")[0];
+  if (!v || v.textContent === "") return null;
+  const s = v.textContent;
+  if (t === "s") return state.strings[+s] ?? null;
+  if (t === "str" || t === "e") return s;
+  if (t === "b") return s === "1";
+  const n = Number(s);
+  return Number.isFinite(n) ? n : s;
+}
+
+function getOrCreateCell(name, ref) {
+  const idx = state.index[name];
+  let c = idx.cells.get(ref);
+  if (c) return c;
+  const doc = state.docs[name];
+  const { col, row } = splitRef(ref);
+  let rowEl = idx.rows.get(row);
+  if (!rowEl) {
+    rowEl = doc.createElementNS(NS, "row");
+    rowEl.setAttribute("r", String(row));
+    const after = [...idx.rows.keys()].filter((r) => r > row).sort((a, b) => a - b)[0];
+    idx.sheetData.insertBefore(rowEl, after ? idx.rows.get(after) : null);
+    idx.rows.set(row, rowEl);
+  }
+  rowEl.removeAttribute("spans");
+  c = doc.createElementNS(NS, "c");
+  c.setAttribute("r", ref);
+  const target = colNum(col);
+  const next = [...rowEl.getElementsByTagNameNS(NS, "c")].find((x) => colNum(splitRef(x.getAttribute("r")).col) > target);
+  rowEl.insertBefore(c, next || null);
+  idx.cells.set(ref, c);
+  return c;
+}
+
+function writeCell(name, ref, value) {
+  const doc = state.docs[name];
+  const c = getOrCreateCell(name, ref);
+  while (c.firstChild) c.removeChild(c.firstChild);
+  c.removeAttribute("t");
+  if (value !== null && value !== undefined && value !== "") {
+    if (typeof value === "number") {
+      const v = doc.createElementNS(NS, "v");
+      v.textContent = String(value);
+      c.appendChild(v);
+    } else {
+      c.setAttribute("t", "inlineStr");
+      const is = doc.createElementNS(NS, "is");
+      const t = doc.createElementNS(NS, "t");
+      t.setAttributeNS(XMLNS, "xml:space", "preserve");
+      t.textContent = String(value);
+      is.appendChild(t);
+      c.appendChild(is);
+    }
+  }
+  state.dirtySheets.add(name);
+}
+
+/* ---------------- load ---------------- */
+async function loadWorkbook(buffer, fileName, handle) {
+  const zip = await JSZip.loadAsync(buffer);
+  const wbFile = zip.file("xl/workbook.xml");
+  const relFile = zip.file("xl/_rels/workbook.xml.rels");
+  if (!wbFile || !relFile) throw new Error("這個檔案不是 Excel 活頁簿（.xlsx）。");
+  const wb = parseXML(await wbFile.async("string"));
+  const rels = parseXML(await relFile.async("string"));
+  const relMap = {}, relType = {};
+  for (const r of rels.getElementsByTagName("Relationship")) {
+    relMap[r.getAttribute("Id")] = r.getAttribute("Target");
+    relType[r.getAttribute("Type").split("/").pop()] = r.getAttribute("Target");
+  }
+  const resolve = (t) => (t.startsWith("/") ? t.slice(1) : "xl/" + t.replace(/^\.\//, ""));
+  const paths = {};
+  for (const s of wb.getElementsByTagNameNS(NS, "sheet")) {
+    const id = s.getAttributeNS(RNS, "id") || s.getAttribute("r:id");
+    if (relMap[id]) paths[s.getAttribute("name")] = resolve(relMap[id]);
+  }
+  const missing = Object.values(SHEET).filter((n) => !paths[n]);
+  if (missing.length) throw new Error(`找不到「${missing.join("」「")}」工作表。請開啟「民宿訂房記帳表」的 Excel 檔。`);
+
+  const strings = [];
+  const ssPath = relType.sharedStrings ? resolve(relType.sharedStrings) : "xl/sharedStrings.xml";
+  if (zip.file(ssPath)) {
+    const ss = parseXML(await zip.file(ssPath).async("string"));
+    for (const si of ss.getElementsByTagNameNS(NS, "si")) {
+      strings.push([...si.getElementsByTagNameNS(NS, "t")].filter((t) => t.parentNode.localName !== "rPh").map((t) => t.textContent).join(""));
+    }
+  }
+
+  const fresh = { zip, fileName, handle, paths, docs: {}, index: {}, strings, wbDoc: wb, dirtySheets: new Set(), changes: 0 };
+  for (const name of Object.values(SHEET)) fresh.docs[name] = parseXML(await zip.file(paths[name]).async("string"));
+  Object.assign(state, fresh);
+  for (const name of Object.values(SHEET)) buildIndex(name);
+
+  if (readCell(SHEET.bookings, "C3") !== "房客姓名" || readCell(SHEET.ledger, "E3") !== "金額") {
+    throw new Error("工作表的欄位跟「民宿訂房記帳表」不一樣，無法安全地寫入。請使用原本的範本檔。");
+  }
+  readAll();
+}
+
+function readAll() {
+  const S = SHEET.settings;
+  const rooms = [];
+  for (let r = 5; r <= 14; r++) {
+    const no = readCell(S, "B" + r);
+    if (no === null || no === "") continue;
+    rooms.push({ no: String(no), type: readCell(S, "C" + r) || "", wk: +readCell(S, "D" + r) || 0, we: +readCell(S, "E" + r) || 0, cap: +readCell(S, "F" + r) || 0 });
+  }
+  const channels = [];
+  for (let r = 5; r <= 12; r++) {
+    const n = readCell(S, "H" + r);
+    if (n === null || n === "") continue;
+    channels.push({ name: String(n), rate: +readCell(S, "I" + r) || 0 });
+  }
+  const listFrom = (col, a, b, fallback) => {
+    const out = [];
+    for (let r = a; r <= b; r++) { const v = readCell(S, col + r); if (v !== null && v !== "") out.push(String(v)); }
+    return out.length ? out : fallback;
+  };
+  state.settings = {
+    rooms, channels,
+    statuses: listFrom("K", 5, 8, ["已確認", "已入住", "已退房", "取消"]),
+    categories: listFrom("M", 5, 20, ["其他支出", "其他收入"]),
+    payments: listFrom("O", 5, 10, ["現金", "轉帳"]),
+  };
+
+  state.bookings = [];
+  for (let r = BK.first; r <= BK.last; r++) {
+    const b = readRow(SHEET.bookings, BK.cols, r);
+    if (!b.name && !b.room && !b.in) continue;
+    state.bookings.push(b);
+  }
+  state.ledger = [];
+  for (let r = LG.first; r <= LG.last; r++) {
+    const e = readRow(SHEET.ledger, LG.cols, r);
+    if (!e.date && !e.amount && !e.desc) continue;
+    state.ledger.push(e);
+  }
+}
+
+function readRow(sheet, cols, r) {
+  const o = { row: r };
+  for (const [k, col] of Object.entries(cols)) {
+    let v = readCell(sheet, col + r);
+    if (DATE_FIELDS.has(k)) v = typeof v === "number" ? fromSerial(v) : (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null);
+    else if (NUM_FIELDS.has(k)) v = v === null || v === "" ? null : Number(v);
+    else v = v === null ? "" : String(v);
+    o[k] = v;
+  }
+  return o;
+}
+
+function writeRow(sheet, cols, r, obj) {
+  for (const [k, col] of Object.entries(cols)) {
+    let v = obj[k];
+    if (DATE_FIELDS.has(k)) v = v ? toSerial(v) : null;
+    else if (NUM_FIELDS.has(k)) v = v === null || v === undefined || v === "" || Number.isNaN(+v) ? null : +v;
+    else v = v ? String(v) : null;
+    writeCell(sheet, col + r, v);
+  }
+  markChanged();
+}
+
+function firstFreeRow(list, first, last) {
+  const used = new Set(list.map((x) => x.row));
+  for (let r = first; r <= last; r++) if (!used.has(r)) return r;
+  return null;
+}
+
+/* ---------------- business rules (same as the Excel formulas) ---------------- */
+const roomOf = (no) => state.settings.rooms.find((r) => r.no === String(no));
+const channelRate = (name) => (state.settings.channels.find((c) => c.name === name) || { rate: 0 }).rate;
+
+function calc(b) {
+  const out = { nights: 0, wkN: 0, weN: 0, price: 0, due: 0, unpaid: 0, fee: 0, valid: false };
+  const room = roomOf(b.room);
+  if (!b.in || !b.out || b.out <= b.in) return out;
+  out.nights = diffDays(b.in, b.out);
+  for (let d = b.in; d < b.out; d = addDays(d, 1)) { const w = dow(d); if (w === 5 || w === 6) out.weN++; else out.wkN++; }
+  if (!room) return out;
+  out.valid = true;
+  out.price = room.wk * out.wkN + room.we * out.weN;
+  out.due = out.price - (+b.discount || 0);
+  const cancelled = b.status === "取消";
+  out.unpaid = cancelled ? 0 : out.due - (+b.deposit || 0) - (+b.balance || 0);
+  out.fee = cancelled ? 0 : Math.round(out.due * channelRate(b.channel));
+  return out;
+}
+
+const overlapping = (b, list = state.bookings) => list.filter((o) => o !== b && o.row !== b.row && o.status !== "取消" &&
+  String(o.room) === String(b.room) && o.in && o.out && b.in && b.out && o.in < b.out && o.out > b.in);
+const bookingId = (b) => "R" + String(b.row - BK.first + 1).padStart(3, "0");
+
+function warnings() {
+  const out = [];
+  const seen = new Set();
+  const today = todayISO();
+  for (const b of state.bookings) {
+    if (b.status === "取消") continue;
+    for (const o of overlapping(b)) {
+      const key = [b.row, o.row].sort().join("-");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ level: "danger", text: `${b.room} 號房重複訂房：${b.name}（${md(b.in)}–${md(b.out)}）和 ${o.name}（${md(o.in)}–${md(o.out)}）`, booking: b });
+    }
+    const c = calc(b);
+    if (b.status === "已退房" && c.unpaid > 0) out.push({ level: "danger", text: `${b.name} 已退房，還有 ${money(c.unpaid)} 元沒收`, booking: b });
+    if (b.status === "已確認" && b.in && b.in < today && b.out && b.out > today) out.push({ level: "soft", text: `${b.name} 應該已經入住（${md(b.in)}），狀態還是「已確認」`, booking: b });
+    if (b.status === "已確認" && b.out && b.out <= today) out.push({ level: "soft", text: `${b.name} 的退房日（${md(b.out)}）已過，狀態還是「已確認」`, booking: b });
+  }
+  return out;
+}
+
+function monthStats(ym) {
+  const start = monthStart(ym), end = monthStart(nextMonth(ym));
+  const days = diffDays(start, end);
+  let orders = 0, nights = 0, revenue = 0, fees = 0;
+  for (const b of state.bookings) {
+    if (b.status === "取消" || !b.in || !b.out) continue;
+    const c = calc(b);
+    if (b.in >= start && b.in < end) { orders++; revenue += c.due; fees += c.fee; }
+    const a = b.in > start ? b.in : start, z = b.out < end ? b.out : end;
+    if (z > a) nights += diffDays(a, z);
+  }
+  let otherIn = 0, expense = 0;
+  for (const e of state.ledger) {
+    if (!e.date || e.date < start || e.date >= end) continue;
+    if (e.kind === "收入") otherIn += +e.amount || 0;
+    else if (e.kind === "支出") expense += +e.amount || 0;
+  }
+  const sellable = state.settings.rooms.length * days;
+  return { orders, nights, revenue, fees, otherIn, expense, net: revenue + otherIn - fees - expense, occ: sellable ? nights / sellable : 0 };
+}
+
+/* ---------------- rendering ---------------- */
+function render() {
+  $("file-label").textContent = state.fileName;
+  renderOverview();
+  renderBookings();
+  renderCalendar();
+  renderLedger();
+}
+
+function statusChip(s) { return `<span class="chip s-${esc(s)}">${esc(s || "—")}</span>`; }
+
+function renderOverview() {
+  const today = todayISO();
+  const ym = monthOf(today);
+  const s = monthStats(ym);
+  const unpaid = state.bookings.reduce((sum, b) => sum + Math.max(0, calc(b).unpaid), 0);
+  const active = state.bookings.filter((b) => b.status !== "取消");
+  const arriving = active.filter((b) => b.in === today);
+  const leaving = active.filter((b) => b.out === today);
+  const staying = active.filter((b) => b.in < today && b.out > today);
+  const upcoming = active.filter((b) => b.in > today && b.in <= addDays(today, 7)).sort((a, b) => (a.in < b.in ? -1 : 1));
+  const warns = warnings();
+
+  const item = (b, extra) => `<div class="item clickable" data-row="${b.row}" tabindex="0" role="button">
+      <span class="room-tag">${esc(b.room)}</span>
+      <div class="main"><strong>${esc(b.name)}</strong><small>${md(b.in)}–${md(b.out)}　${calc(b).nights} 晚　${esc(b.channel)}${extra ? "　" + extra : ""}</small></div>
+      ${statusChip(b.status)}</div>`;
+  const list = (arr, emptyText, extraFn) => arr.length ? `<div class="list">${arr.map((b) => item(b, extraFn && extraFn(b))).join("")}</div>` : `<p class="empty">${emptyText}</p>`;
+  const unpaidNote = (b) => { const u = calc(b).unpaid; return u > 0 ? `<span class="unpaid">未收 ${money(u)}</span>` : ""; };
+
+  $("tab-overview").innerHTML = `
+    <div class="row"><h2 style="margin:0;font-size:18px">${monthLabel(ym)}</h2><span class="muted">今天 ${md(today)}（${WEEK[dow(today)]}）</span></div>
+    <div class="kpis">
+      <div class="kpi"><span>本月住房收入</span><b>${money(s.revenue)}</b><small>${s.orders} 筆訂房（依入住日）</small></div>
+      <div class="kpi"><span>本月住房率</span><b>${pct(s.occ)}</b><small>${s.nights} 房晚</small></div>
+      <div class="kpi"><span>本月淨利</span><b>${money(s.net)}</b><small>扣除抽成 ${money(s.fees)}、支出 ${money(s.expense)}</small></div>
+      <div class="kpi ${unpaid > 0 ? "alert" : ""}"><span>尚未收款</span><b>${money(unpaid)}</b><small>所有未取消的訂房</small></div>
+    </div>
+    ${warns.length ? `<div class="card"><h2>需要注意（${warns.length}）</h2><div class="list">${warns.map((w) =>
+      `<div class="warn ${w.level === "soft" ? "soft" : ""}"><b>${w.level === "soft" ? "提醒" : "⚠"}</b><span>${esc(w.text)}</span><button type="button" class="btn small" data-row="${w.booking.row}">查看</button></div>`).join("")}</div></div>` : ""}
+    <div class="cols">
+      <div class="card"><h2>今天入住（${arriving.length}）</h2>${list(arriving, "今天沒有人入住。", unpaidNote)}</div>
+      <div class="card"><h2>今天退房（${leaving.length}）</h2>${list(leaving, "今天沒有人退房。", unpaidNote)}</div>
+      <div class="card"><h2>住宿中（${staying.length}）</h2>${list(staying, "目前沒有住宿中的房客。")}</div>
+      <div class="card"><h2>未來 7 天入住（${upcoming.length}）</h2>${list(upcoming, "未來 7 天沒有訂房。", unpaidNote)}</div>
+    </div>`;
+}
+
+function renderBookings() {
+  const q = $("bk-search").value.trim().toLowerCase();
+  const f = state.filter;
+  let rows = state.bookings.filter((b) => {
+    if (f === "active" && (b.status === "已退房" || b.status === "取消")) return false;
+    if (f !== "active" && f !== "all" && b.status !== f) return false;
+    if (q && ![b.name, b.phone, b.room, b.note, bookingId(b)].some((x) => String(x || "").toLowerCase().includes(q))) return false;
+    return true;
+  });
+  rows.sort((a, b) => { const x = a.in || "", y = b.in || ""; const c = x < y ? -1 : x > y ? 1 : a.row - b.row; return f === "active" ? c : -c; });
+  $("bk-rows").innerHTML = rows.length ? rows.map((b) => {
+    const c = calc(b);
+    const dup = b.status !== "取消" && overlapping(b).length;
+    return `<tr data-row="${b.row}" tabindex="0" class="${b.status === "取消" ? "cancelled" : ""}">
+      <td>${bookingId(b)}</td>
+      <td><strong>${esc(b.name)}</strong>${b.phone ? `<br><small class="muted">${esc(b.phone)}</small>` : ""}</td>
+      <td><span class="room-tag">${esc(b.room)}</span></td>
+      <td>${b.in ? md(b.in) : "—"} → ${b.out ? md(b.out) : "—"}　<small class="muted">${c.nights} 晚</small>${dup ? ' <span class="chip dup">重複訂房</span>' : ""}</td>
+      <td>${esc(b.channel)}</td>
+      <td class="num">${c.valid ? money(c.due) : "—"}</td>
+      <td class="num ${c.unpaid > 0 ? "unpaid" : ""}">${c.unpaid > 0 ? money(c.unpaid) : "—"}</td>
+      <td>${statusChip(b.status)}</td></tr>`;
+  }).join("") : `<tr><td colspan="8" class="empty">沒有符合條件的訂房。</td></tr>`;
+  $("bk-count").textContent = `共 ${rows.length} 筆　·　檔案可存 ${BK.last - BK.first + 1} 筆，已用 ${state.bookings.length} 筆`;
+}
+
+function renderCalendar() {
+  const ym = state.calMonth;
+  $("cal-title").textContent = monthLabel(ym);
+  const start = monthStart(ym);
+  const days = diffDays(start, monthStart(nextMonth(ym)));
+  const today = todayISO();
+  const dates = Array.from({ length: days }, (_, i) => addDays(start, i));
+  const active = state.bookings.filter((b) => b.status !== "取消" && b.in && b.out);
+  let html = `<thead><tr><th class="roomh">房間</th>${dates.map((d) => {
+    const w = dow(d);
+    return `<th class="${d === today ? "today" : (w === 5 || w === 6) ? "we" : ""}">${+d.slice(8)}<br>${WEEK[w]}</th>`;
+  }).join("")}</tr></thead><tbody>`;
+  const free = dates.map(() => state.settings.rooms.length);
+  for (const room of state.settings.rooms) {
+    html += `<tr><th class="roomh"><b>${esc(room.no)}</b><small>${esc(room.type)}</small></th>`;
+    dates.forEach((d, i) => {
+      const here = active.filter((b) => b.room === room.no && b.in <= d && b.out > d);
+      if (here.length) free[i]--;
+      const b = here[0];
+      html += here.length
+        ? `<td class="booked ${here.length > 1 ? "dup" : ""}"><button type="button" data-row="${b.row}" title="${esc(here.map((x) => x.name).join("、"))}">${esc(here.length > 1 ? "⚠ " + here.length + " 筆" : b.name)}</button></td>`
+        : `<td><button type="button" data-new-room="${esc(room.no)}" data-new-date="${d}" aria-label="${esc(room.no)} 號房 ${md(d)} 新增訂房"></button></td>`;
+    });
+    html += "</tr>";
+  }
+  html += `</tbody><tfoot><tr><th>空房數</th>${free.map((n) => `<td>${n}</td>`).join("")}</tr></tfoot>`;
+  $("cal-table").innerHTML = html;
+}
+
+function renderLedger() {
+  const ym = state.lgMonth;
+  $("lg-title").textContent = monthLabel(ym);
+  const s = monthStats(ym);
+  $("lg-kpis").innerHTML = `
+    <div class="kpi"><span>住房收入</span><b>${money(s.revenue)}</b><small>來自訂房紀錄</small></div>
+    <div class="kpi"><span>其他收入</span><b>${money(s.otherIn)}</b><small>早餐、接駁等</small></div>
+    <div class="kpi"><span>支出（含平台抽成）</span><b>${money(s.expense + s.fees)}</b><small>抽成 ${money(s.fees)}</small></div>
+    <div class="kpi"><span>淨利</span><b>${money(s.net)}</b><small>${monthLabel(ym)}</small></div>`;
+  const start = monthStart(ym), end = monthStart(nextMonth(ym));
+  const rows = state.ledger.filter((e) => e.date && e.date >= start && e.date < end).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.row - b.row));
+  $("lg-rows").innerHTML = rows.length ? rows.map((e) => `<tr data-lrow="${e.row}" tabindex="0">
+      <td>${md(e.date)}</td><td>${e.kind === "收入" ? '<span class="chip s-已入住">收入</span>' : '<span class="chip due">支出</span>'}</td>
+      <td>${esc(e.cat)}</td><td>${esc(e.desc)}</td><td class="num">${money(e.amount)}</td><td>${esc(e.pay)}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">這個月還沒有收支紀錄。</td></tr>`;
+}
+
+/* ---------------- change tracking & save ---------------- */
+function markChanged() {
+  state.changes++;
+  $("dirty-badge").hidden = false;
+  $("dirty-badge").textContent = `${state.changes} 項變更未儲存`;
+  $("btn-save").disabled = false;
+}
+
+async function save() {
+  if (!state.zip || !state.dirtySheets.size) return;
+  const btn = $("btn-save");
+  btn.disabled = true;
+  btn.textContent = "儲存中…";
+  try {
+    for (const name of state.dirtySheets) state.zip.file(state.paths[name], serialize(state.docs[name]));
+    // Ask Excel to recalculate every formula when the file is opened.
+    let calcPr = state.wbDoc.getElementsByTagNameNS(NS, "calcPr")[0];
+    if (!calcPr) {
+      calcPr = state.wbDoc.createElementNS(NS, "calcPr");
+      const root = state.wbDoc.documentElement;
+      const before = ["oleSize", "customWorkbookViews", "pivotCaches", "smartTagPr", "smartTagTypes", "webPublishing", "fileRecoveryPr", "webPublishObjects", "extLst"]
+        .map((n) => root.getElementsByTagNameNS(NS, n)[0]).find(Boolean);
+      root.insertBefore(calcPr, before || null);
+    }
+    calcPr.setAttribute("fullCalcOnLoad", "1");
+    state.zip.file("xl/workbook.xml", serialize(state.wbDoc));
+    const blob = await state.zip.generateAsync({ type: "blob", compression: "DEFLATE", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+    let savedInPlace = false;
+    if (state.handle && state.handle.createWritable) {
+      try {
+        if (state.handle.requestPermission && (await state.handle.requestPermission({ mode: "readwrite" })) !== "granted") throw new Error("permission");
+        const w = await state.handle.createWritable();
+        await w.write(blob);
+        await w.close();
+        savedInPlace = true;
+      } catch (err) {
+        console.warn(err);
+        toast("無法直接存回原檔（檔案可能正在 Excel 中開啟）。已改為下載新檔。");
+      }
+    }
+    if (!savedInPlace) download(blob, state.fileName);
+    state.dirtySheets.clear();
+    state.changes = 0;
+    $("dirty-badge").hidden = true;
+    if (savedInPlace) toast(`已儲存到「${state.fileName}」`);
+    else if (!state.handle) toast("已下載更新後的 Excel，請用它取代原本的檔案。");
+  } catch (err) {
+    console.error(err);
+    toast("儲存失敗：" + err.message);
+    btn.disabled = false;
+  } finally {
+    btn.textContent = "儲存到 Excel";
+    btn.disabled = state.changes === 0;
+  }
+}
+
+function download(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name || "民宿訂房記帳表.xlsx";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+
+let toastTimer;
+function toast(msg) {
+  $("toast").textContent = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").textContent = ""; }, 4200);
+}
+
+/* ---------------- booking dialog ---------------- */
+function fillSelect(sel, items, current, placeholder) {
+  sel.innerHTML = (placeholder ? `<option value="">${esc(placeholder)}</option>` : "") +
+    items.map((it) => `<option value="${esc(it.value)}"${String(it.value) === String(current ?? "") ? " selected" : ""}>${esc(it.label)}</option>`).join("");
+  if (current && ![...sel.options].some((o) => o.value === String(current))) {
+    sel.insertAdjacentHTML("beforeend", `<option value="${esc(current)}" selected>${esc(current)}（不在設定清單中）</option>`);
+  }
+}
+
+function openBooking(b, preset) {
+  state.editingBooking = b || null;
+  const isNew = !b;
+  const d = b || Object.assign({ name: "", phone: "", room: "", in: "", out: "", ppl: null, channel: "直客", status: "已確認", discount: null, deposit: null, balance: null, booked: todayISO(), note: "" }, preset || {});
+  $("bk-dlg-title").textContent = isNew ? "新增訂房" : `修改訂房 ${bookingId(b)}`;
+  $("f-name").value = d.name || "";
+  $("f-phone").value = d.phone || "";
+  fillSelect($("f-room"), state.settings.rooms.map((r) => ({ value: r.no, label: `${r.no}　${r.type}` })), d.room, "選擇房間");
+  $("f-ppl").value = d.ppl ?? "";
+  $("f-in").value = d.in || "";
+  $("f-out").value = d.out || "";
+  fillSelect($("f-channel"), state.settings.channels.map((c) => ({ value: c.name, label: c.rate ? `${c.name}（抽成 ${Math.round(c.rate * 1000) / 10}%）` : c.name })), d.channel, "選擇管道");
+  fillSelect($("f-status"), state.settings.statuses.map((s) => ({ value: s, label: s })), d.status);
+  $("f-discount").value = d.discount ?? "";
+  $("f-deposit").value = d.deposit ?? "";
+  $("f-balance").value = d.balance ?? "";
+  $("f-booked").value = d.booked || "";
+  $("f-note").value = d.note || "";
+  $("f-error").hidden = true;
+  const del = $("bk-delete");
+  del.hidden = isNew;
+  del.classList.remove("armed");
+  del.textContent = "刪除這筆";
+  updateBookingPreview();
+  $("dlg-booking").showModal();
+  setTimeout(() => $("f-name").focus(), 30);
+}
+
+function formBooking() {
+  const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Math.round(+v); };
+  return {
+    row: state.editingBooking ? state.editingBooking.row : -1,
+    name: $("f-name").value.trim(), phone: $("f-phone").value.trim(), room: $("f-room").value,
+    in: $("f-in").value, out: $("f-out").value, ppl: num("f-ppl"), channel: $("f-channel").value,
+    status: $("f-status").value, discount: num("f-discount"), deposit: num("f-deposit"), balance: num("f-balance"),
+    booked: $("f-booked").value, note: $("f-note").value.trim(),
+  };
+}
+
+function updateBookingPreview() {
+  const b = formBooking();
+  const c = calc(b);
+  const room = roomOf(b.room);
+  $("f-ppl-hint").textContent = room && room.cap ? `最多 ${room.cap} 人${b.ppl && b.ppl > room.cap ? "，已超過" : ""}` : "";
+  $("f-ppl-hint").style.color = room && b.ppl && b.ppl > room.cap ? "var(--danger)" : "";
+  if (!b.in || !b.out) {
+    $("f-summary").innerHTML = `<span class="muted">選好房間和入住、退房日，就會自動算出房價。</span>`;
+  } else if (b.out <= b.in) {
+    $("f-summary").innerHTML = `<span class="unpaid">退房日要晚於入住日。</span>`;
+  } else if (!room) {
+    $("f-summary").innerHTML = `<span>${c.nights} 晚（平日 ${c.wkN}、假日 ${c.weN}）</span><span class="muted">選擇房間後計算房價。</span>`;
+  } else {
+    $("f-summary").innerHTML = `
+      <div class="line"><span>${c.nights} 晚（平日 ${c.wkN}、假日 ${c.weN}）</span><span>定價 <b>${money(c.price)}</b></span><span>應收 <b>${money(c.due)}</b></span></div>
+      <div class="line"><span>未收 <b class="${c.unpaid > 0 ? "unpaid" : ""}">${money(c.unpaid)}</b></span><span class="muted">平台抽成 ${money(c.fee)}</span></div>`;
+  }
+  const conflicts = b.status === "取消" ? [] : overlapping(b);
+  const box = $("f-conflict");
+  if (conflicts.length) {
+    box.hidden = false;
+    box.innerHTML = `<div class="warn"><b>⚠</b><span>${esc(b.room)} 號房這段時間已經有人訂了：${conflicts.map((o) => `${esc(o.name)}（${md(o.in)}–${md(o.out)}）`).join("、")}。</span></div>`;
+    $("bk-submit").textContent = "仍要儲存";
+  } else {
+    box.hidden = true;
+    $("bk-submit").textContent = "儲存這筆";
+  }
+}
+
+function submitBooking(ev) {
+  ev.preventDefault();
+  const b = formBooking();
+  const errs = [];
+  if (!b.name) errs.push("房客姓名");
+  if (!b.room) errs.push("房間");
+  if (!b.in) errs.push("入住日");
+  if (!b.out) errs.push("退房日");
+  if (!b.channel) errs.push("訂房管道");
+  let msg = errs.length ? `請填寫：${errs.join("、")}。` : "";
+  if (!msg && b.out <= b.in) msg = "退房日要晚於入住日。";
+  if (msg) { $("f-error").textContent = msg; $("f-error").hidden = false; return; }
+
+  let row = state.editingBooking ? state.editingBooking.row : firstFreeRow(state.bookings, BK.first, BK.last);
+  if (!row) { $("f-error").textContent = `檔案最多可存 ${BK.last - BK.first + 1} 筆訂房，已經滿了。`; $("f-error").hidden = false; return; }
+  b.row = row;
+  writeRow(SHEET.bookings, BK.cols, row, b);
+  if (state.editingBooking) Object.assign(state.editingBooking, b);
+  else state.bookings.push(b);
+  $("dlg-booking").close();
+  render();
+  toast(state.editingBooking ? `已更新 ${b.name} 的訂房（記得按「儲存到 Excel」）` : `已新增 ${b.name} 的訂房（記得按「儲存到 Excel」）`);
+}
+
+function deleteBooking() {
+  const del = $("bk-delete");
+  if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "確定刪除？"; return; }
+  const b = state.editingBooking;
+  const blank = Object.fromEntries(Object.keys(BK.cols).map((k) => [k, null]));
+  writeRow(SHEET.bookings, BK.cols, b.row, blank);
+  state.bookings = state.bookings.filter((x) => x !== b);
+  $("dlg-booking").close();
+  render();
+  toast(`已刪除 ${b.name} 的訂房。若只是取消，建議把狀態改成「取消」保留紀錄。`);
+}
+
+/* ---------------- ledger form ---------------- */
+function setLgKind(kind) {
+  state.lgKind = kind;
+  for (const btn of document.querySelectorAll("#lg-form .seg button")) btn.setAttribute("aria-pressed", String(btn.dataset.kind === kind));
+}
+
+function resetLedgerForm() {
+  state.editingLedger = null;
+  $("lg-form-title").textContent = "記一筆";
+  $("lg-submit").textContent = "新增";
+  $("lg-delete").hidden = true;
+  $("lg-cancel").hidden = true;
+  const ym = state.lgMonth, t = todayISO();
+  $("lg-date").value = monthOf(t) === ym ? t : monthStart(ym);
+  fillSelect($("lg-cat"), state.settings.categories.map((c) => ({ value: c, label: c })), "", "選擇類別");
+  fillSelect($("lg-pay"), state.settings.payments.map((p) => ({ value: p, label: p })), state.settings.payments[0] || "");
+  $("lg-amount").value = "";
+  $("lg-desc").value = "";
+  $("lg-error").hidden = true;
+  setLgKind("支出");
+}
+
+function editLedger(e) {
+  state.editingLedger = e;
+  $("lg-form-title").textContent = "修改這筆";
+  $("lg-submit").textContent = "更新";
+  $("lg-delete").hidden = false;
+  $("lg-delete").classList.remove("armed");
+  $("lg-delete").textContent = "刪除這筆";
+  $("lg-cancel").hidden = false;
+  $("lg-date").value = e.date || "";
+  fillSelect($("lg-cat"), state.settings.categories.map((c) => ({ value: c, label: c })), e.cat, "選擇類別");
+  fillSelect($("lg-pay"), state.settings.payments.map((p) => ({ value: p, label: p })), e.pay);
+  $("lg-amount").value = e.amount ?? "";
+  $("lg-desc").value = e.desc || "";
+  setLgKind(e.kind === "收入" ? "收入" : "支出");
+  $("lg-form").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function submitLedger(ev) {
+  ev.preventDefault();
+  const e = {
+    date: $("lg-date").value, kind: state.lgKind, cat: $("lg-cat").value, desc: $("lg-desc").value.trim(),
+    amount: $("lg-amount").value === "" ? null : Math.round(+$("lg-amount").value), pay: $("lg-pay").value,
+    note: state.editingLedger ? state.editingLedger.note : "",
+  };
+  const errs = [];
+  if (!e.date) errs.push("日期");
+  if (!e.cat) errs.push("類別");
+  if (e.amount === null || e.amount < 0) errs.push("金額");
+  if (errs.length) { $("lg-error").textContent = `請填寫：${errs.join("、")}。`; $("lg-error").hidden = false; return; }
+  const row = state.editingLedger ? state.editingLedger.row : firstFreeRow(state.ledger, LG.first, LG.last);
+  if (!row) { $("lg-error").textContent = `檔案最多可存 ${LG.last - LG.first + 1} 筆收支，已經滿了。`; $("lg-error").hidden = false; return; }
+  e.row = row;
+  writeRow(SHEET.ledger, LG.cols, row, e);
+  if (state.editingLedger) Object.assign(state.editingLedger, e); else state.ledger.push(e);
+  const wasEdit = !!state.editingLedger;
+  if (monthOf(e.date) !== state.lgMonth) state.lgMonth = monthOf(e.date);
+  resetLedgerForm();
+  render();
+  toast(wasEdit ? "已更新這筆收支（記得按「儲存到 Excel」）" : "已新增一筆收支（記得按「儲存到 Excel」）");
+}
+
+function deleteLedger() {
+  const del = $("lg-delete");
+  if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "確定刪除？"; return; }
+  const e = state.editingLedger;
+  writeRow(SHEET.ledger, LG.cols, e.row, Object.fromEntries(Object.keys(LG.cols).map((k) => [k, null])));
+  state.ledger = state.ledger.filter((x) => x !== e);
+  resetLedgerForm();
+  render();
+  toast("已刪除這筆收支。");
+}
+
+/* ---------------- open files ---------------- */
+async function openFromBuffer(buf, name, handle) {
+  try {
+    await loadWorkbook(buf, name, handle);
+    const m = monthOf(todayISO());
+    state.calMonth = m;
+    state.lgMonth = m;
+    $("start").hidden = true;
+    $("app").hidden = false;
+    $("btn-open-other").hidden = false;
+    $("btn-save").disabled = true;
+    $("btn-save").title = handle && handle.createWritable ? "直接存回原本的檔案" : "下載更新後的 Excel 檔";
+    resetLedgerForm();
+    render();
+    switchTab("overview");
+    toast(`已開啟「${name}」：${state.bookings.length} 筆訂房、${state.ledger.length} 筆收支`);
+  } catch (err) {
+    console.error(err);
+    showStartError(err.message || "無法讀取這個檔案。");
+  }
+}
+
+function showStartError(msg) {
+  $("start").hidden = false;
+  $("app").hidden = true;
+  $("start-error").textContent = msg;
+  $("start-error").hidden = false;
+}
+
+async function pickFile() {
+  if (state.changes && !confirmLeave()) return;
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({ types: [{ description: "Excel 活頁簿", accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] } }] });
+      const file = await handle.getFile();
+      await openFromBuffer(await file.arrayBuffer(), file.name, handle);
+      return;
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      console.warn(err);
+    }
+  }
+  $("file-input").click();
+}
+
+function confirmLeave() {
+  toast("還有變更沒儲存，請先按「儲存到 Excel」，或再按一次「開啟其他檔案」放棄變更。");
+  if (state.leaveArmed) { state.leaveArmed = false; return true; }
+  state.leaveArmed = true;
+  setTimeout(() => (state.leaveArmed = false), 5000);
+  return false;
+}
+
+/* ---------------- tabs & events ---------------- */
+function switchTab(name) {
+  for (const btn of document.querySelectorAll(".tabs button")) btn.setAttribute("aria-selected", String(btn.dataset.tab === name));
+  for (const p of ["overview", "bookings", "calendar", "ledger"]) $("tab-" + p).hidden = p !== name;
+}
+
+document.querySelectorAll(".tabs button").forEach((btn) => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+$("btn-open").addEventListener("click", pickFile);
+$("btn-open-other").addEventListener("click", pickFile);
+$("file-input").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  if (f) await openFromBuffer(await f.arrayBuffer(), f.name, null);
+  e.target.value = "";
+});
+$("btn-sample").addEventListener("click", async () => {
+  try {
+    const res = await fetch("sample.xlsx");
+    if (!res.ok) throw new Error();
+    await openFromBuffer(await res.arrayBuffer(), "民宿訂房記帳表_範例.xlsx", null);
+  } catch { showStartError("找不到範例檔。請改用「選擇 Excel 檔」開啟你的檔案。"); }
+});
+const drop = $("drop");
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  drop.classList.remove("over");
+  const item = e.dataTransfer.items && e.dataTransfer.items[0];
+  let handle = null;
+  if (item && item.getAsFileSystemHandle) { try { handle = await item.getAsFileSystemHandle(); } catch { handle = null; } }
+  const file = handle && handle.getFile ? await handle.getFile() : e.dataTransfer.files[0];
+  if (file) await openFromBuffer(await file.arrayBuffer(), file.name, handle && handle.kind === "file" ? handle : null);
+});
+$("btn-save").addEventListener("click", save);
+
+$("btn-new-booking").addEventListener("click", () => openBooking(null));
+$("bk-search").addEventListener("input", renderBookings);
+$("bk-filters").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  state.filter = btn.dataset.filter;
+  for (const b of $("bk-filters").children) b.setAttribute("aria-pressed", String(b === btn));
+  renderBookings();
+});
+const openRowFrom = (e) => {
+  const el = e.target.closest("[data-row]");
+  if (!el) return false;
+  const b = state.bookings.find((x) => x.row === +el.dataset.row);
+  if (b) openBooking(b);
+  return true;
+};
+$("bk-rows").addEventListener("click", openRowFrom);
+$("tab-overview").addEventListener("click", openRowFrom);
+for (const id of ["bk-rows", "tab-overview", "lg-rows"]) {
+  $(id).addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("[tabindex]")) e.target.click(); });
+}
+$("cal-table").addEventListener("click", (e) => {
+  if (openRowFrom(e)) return;
+  const btn = e.target.closest("[data-new-room]");
+  if (btn) openBooking(null, { room: btn.dataset.newRoom, in: btn.dataset.newDate, out: addDays(btn.dataset.newDate, 1) });
+});
+$("cal-prev").addEventListener("click", () => { state.calMonth = prevMonth(state.calMonth); renderCalendar(); });
+$("cal-next").addEventListener("click", () => { state.calMonth = nextMonth(state.calMonth); renderCalendar(); });
+$("cal-today").addEventListener("click", () => { state.calMonth = monthOf(todayISO()); renderCalendar(); });
+
+$("bk-form").addEventListener("submit", submitBooking);
+$("bk-form").addEventListener("input", updateBookingPreview);
+$("bk-form").addEventListener("change", updateBookingPreview);
+$("f-in").addEventListener("change", () => { const i = $("f-in").value, o = $("f-out").value; if (i && (!o || o <= i)) { $("f-out").value = addDays(i, 1); updateBookingPreview(); } });
+$("f-payall").addEventListener("click", () => {
+  const b = formBooking();
+  const c = calc(b);
+  if (!c.valid) return;
+  $("f-balance").value = Math.max(0, c.due - (b.deposit || 0));
+  updateBookingPreview();
+});
+$("bk-cancel").addEventListener("click", () => $("dlg-booking").close());
+$("bk-close").addEventListener("click", () => $("dlg-booking").close());
+$("bk-delete").addEventListener("click", deleteBooking);
+
+$("lg-form").addEventListener("submit", submitLedger);
+document.querySelectorAll("#lg-form .seg button").forEach((b) => b.addEventListener("click", () => setLgKind(b.dataset.kind)));
+$("lg-cancel").addEventListener("click", resetLedgerForm);
+$("lg-delete").addEventListener("click", deleteLedger);
+$("lg-rows").addEventListener("click", (e) => {
+  const tr = e.target.closest("[data-lrow]");
+  if (!tr) return;
+  const entry = state.ledger.find((x) => x.row === +tr.dataset.lrow);
+  if (entry) editLedger(entry);
+});
+$("lg-prev").addEventListener("click", () => { state.lgMonth = prevMonth(state.lgMonth); resetLedgerForm(); renderLedger(); });
+$("lg-next").addEventListener("click", () => { state.lgMonth = nextMonth(state.lgMonth); resetLedgerForm(); renderLedger(); });
+
+window.addEventListener("beforeunload", (e) => { if (state.changes) { e.preventDefault(); e.returnValue = ""; } });
+</script>
+</body>
+</html>
